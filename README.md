@@ -351,6 +351,107 @@ Authorization: Bearer <your_jwt_token_here>
 
 ---
 
+## 📱 Devices Module (`/api/device`)
+
+### 1. Create a Device (🔒 Protected)
+`POST /api/device/`
+
+**Request Payload:**
+```json
+{
+  "name": "Smart Controller V1",
+  "owner_type": "USER"
+}
+```
+
+**Success Response (201 Created):**
+```json
+{
+  "message": "Device created successfully",
+  "device": {
+    "id": "uuid-here",
+    "name": "Smart Controller V1",
+    "status": "OFFLINE",
+    "created_at": "...",
+    "updated_at": "..."
+  }
+}
+```
+
+### 2. Get All Devices (🔒 Protected)
+`GET /api/device/`
+
+### 3. Get My Devices (🔒 Protected)
+`GET /api/device/my`
+
+### 4. Get Device by ID (🔒 Protected)
+`GET /api/device/:deviceId`
+
+### 5. Update Device (🔒 Protected)
+`PATCH /api/device/:deviceId`
+
+**Request Payload:**
+```json
+{
+  "name": "Updated Name",
+  "status": "ONLINE"
+}
+```
+
+### 6. Soft Delete Device (🔒 Protected)
+`DELETE /api/device/:deviceId`
+
+### 7. Add Owner to Device (🔒 Protected)
+`POST /api/device/:deviceId/owner`
+
+**Request Payload:**
+```json
+{
+  "owner_id": "owner-uuid-here",
+  "owner_type": "GROUP"
+}
+```
+
+### 8. Remove Owner from Device (🔒 Protected)
+`DELETE /api/device/:deviceId/owner`
+
+**Request Payload:**
+```json
+{
+  "owner_id": "owner-uuid-here",
+  "owner_type": "GROUP"
+}
+```
+
+### 9. Get Device Owners (🔒 Protected)
+`GET /api/device/:deviceId/owners`
+
+### 10. Create Device Log (🔒 Protected)
+`POST /api/device/:deviceId/logs`
+
+**Request Payload:**
+```json
+{
+  "log_type": "TELEMETRY",
+  "payload": "{\"temp\": 25.5, \"humidity\": 60}"
+}
+```
+
+### 11. Get Device Logs (🔒 Protected)
+`GET /api/device/:deviceId/logs`
+
+---
+
+## 📜 Activity Logs Module (`/api/activityLogs`)
+
+### 1. Get All Activity Logs (🔒 Protected)
+`GET /api/activityLogs/`
+
+### 2. Get My Activity Logs (🔒 Protected)
+`GET /api/activityLogs/my`
+
+---
+
 ## 🚫 Standard Error Response
 If any request fails (Validation, Not Found, Conflict, Unauthorized), the API will return an appropriate HTTP Status Code and a JSON body in the following format:
 

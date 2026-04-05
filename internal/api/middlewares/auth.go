@@ -5,27 +5,10 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
-
-// GenerateToken generates a JWT token for a given user ID
-func GenerateToken(userID string) (string, error) {
-	secret := os.Getenv("JWT_SECRET")
-	if secret == "" {
-		return "", fmt.Errorf("JWT_SECRET environment variable not set")
-	}
-
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(), // 3 days expiration
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(secret))
-}
 
 // AuthMiddleware validates the JWT token in the Authorization header
 func AuthMiddleware() gin.HandlerFunc {

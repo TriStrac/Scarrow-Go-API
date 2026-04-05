@@ -3,9 +3,9 @@ package service
 import (
 	"errors"
 
-	"github.com/TriStrac/Scarrow-Go-API/internal/api/middlewares"
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
+	"github.com/TriStrac/Scarrow-Go-API/pkg/utils"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -75,7 +75,7 @@ func (s *userService) Login(username, password string) (string, error) {
 	}
 
 	// Generate JWT
-	token, err := middlewares.GenerateToken(user.ID)
+	token, err := utils.GenerateToken(user.ID)
 	if err != nil {
 		return "", err
 	}

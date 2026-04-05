@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/controllers"
+	"github.com/TriStrac/Scarrow-Go-API/internal/api/middlewares"
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/routes"
 	"github.com/TriStrac/Scarrow-Go-API/internal/config"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
@@ -32,6 +33,16 @@ func main() {
 	groupService := service.NewGroupService(groupRepo, userRepo)
 	groupController := controllers.NewGroupController(groupService)
 
+	// Dependency Injection for ActivityLog Domain
+	activityLogRepo := repository.NewActivityLogRepository(config.DB)
+	activityLogService := service.NewActivityLogService(activityLogRepo)
+	activityLogController := controllers.NewActivityLogController(activityLogService)
+
+	// Dependency Injection for Device Domain
+	deviceRepo := repository.NewDeviceRepository(config.DB)
+	deviceService := service.NewDeviceService(deviceRepo)
+	deviceController := controllers.NewDeviceController(deviceService)
+
 	// Initialize Gin router
 	router := gin.Default()
 
@@ -45,8 +56,13 @@ func main() {
 
 	// Setup API Routes
 	apiGroup := router.Group("/api")
+	// Apply ActivityLogMiddleware to all mutating operations in /api
+	apiGroup.Use(middlewares.ActivityLogMiddleware(activityLogService))
+
 	routes.SetupUserRoutes(apiGroup, userController)
 	routes.SetupGroupRoutes(apiGroup, groupController)
+	routes.RegisterDeviceRoutes(apiGroup, deviceController)
+	routes.RegisterActivityLogRoutes(apiGroup, activityLogController)
 
 	// Configure the HTTP server
 	srv := &http.Server{

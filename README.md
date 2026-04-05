@@ -1,56 +1,23 @@
 # Scarrow-Go-API - Frontend Integration Guide 🚀
 
-This guide provides everything a frontend developer needs to integrate with the Scarrow Backend.
-
 **Base URL:** `http://localhost:8080` (Local) / `https://api.scarrow.com` (Production)
-
----
 
 ## 🔑 Global Configuration
 
-### Headers
 All protected endpoints (`🔒`) require the following header:
-| Header | Value | Description |
-| :--- | :--- | :--- |
-| `Content-Type` | `application/json` | Required for all POST/PATCH requests |
-| `Authorization` | `Bearer <token>` | Required for all protected routes |
+```http
+Content-Type: application/json
+Authorization: Bearer <your_jwt_token_here>
+```
 
 ---
 
 ## 👥 Users Module (`/api/users`)
 
-| Method | Endpoint | Auth | Description | Request Payload | Success Response (200/201) | Common Errors |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/` | ❌ | **Register** | `{ "username": "...", "password": "...", "profile": {...}, "address": {...} }` | `{ "message": "...", "user": {...} }` | `400`: Validation<br>`409`: Username taken |
-| `POST` | `/login` | ❌ | **Login** | `{ "username": "...", "password": "..." }` | `{ "token": "eyJhbG..." }` | `401`: Invalid credentials |
-| `GET` | `/usernameExists` | ❌ | **Check User** | `?username=johndoe` (Query) | `{ "exists": true }` | `400`: Missing param |
-| `GET` | `/` | 🔒 | **List All** | `None` | `{ "users": [...] }` | `401`: Unauthorized |
-| `GET` | `/:userId` | 🔒 | **Get Info** | `None` | `{ "user": {...} }` | `404`: Not found |
-| `PATCH`| `/:userId` | 🔒 | **Update** | `{ "username": "...", "profile": {...} }` | `{ "message": "Updated" }` | `400`: Bad Payload |
-| `POST` | `/changePassword`| 🔒 | **Password** | `{ "new_password": "..." }` | `{ "message": "Changed" }` | `400`: Min length 6 |
-| `PATCH`| `/:userId/softDelete`| 🔒 | **Delete** | `None` | `{ "message": "Deleted" }` | `404`: Not found |
+### 1. Register a New User (❌ Public)
+`POST /api/users/`
 
----
-
-## 🏢 Groups / Companies Module (`/api/groups`)
-*Note: A user can belong to **strictly one or zero** Groups. Addition will fail if the user is already employed.*
-
-| Method | Endpoint | Auth | Description | Request Payload | Success Response (200/201) | Common Errors |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `POST` | `/` | 🔒 | **Create** | `{ "name": "Company Name" }` | `{ "message": "Created", "group": {...} }` | `409`: Name taken |
-| `GET` | `/` | 🔒 | **List All** | `None` | `{ "groups": [...] }` | `401`: Unauthorized |
-| `GET` | `/owner` | 🔒 | **My Groups** | `None` | `{ "groups": [...] }` | `401`: Unauthorized |
-| `GET` | `/:groupId` | 🔒 | **Get Group** | `None` | `{ "group": {...} }` | `404`: Not found |
-| `PATCH`| `/:groupId` | 🔒 | **Rename** | `{ "name": "New Name" }` | `{ "message": "Updated" }` | `409`: Name taken |
-| `POST` | `/member` | 🔒 | **Add Member**| `{ "group_id": "...", "username": "..." }` | `{ "message": "Added" }` | `400`: User in another group |
-| `DELETE`| `/member` | 🔒 | **Remove** | `{ "group_id": "...", "user_id": "..." }` | `{ "message": "Removed" }` | `404`: Not found |
-| `GET` | `/:groupId/members`| 🔒 | **Members** | `None` | `{ "members": [...] }` | `404`: Not found |
-
----
-
-## 📦 Implementation Reference (JSON Samples)
-
-### 1. Register User (Full Body)
+**Request Payload:**
 ```json
 {
   "username": "johndoe123",
@@ -72,41 +39,323 @@ All protected endpoints (`🔒`) require the following header:
 }
 ```
 
-### 2. User Object Structure (Response)
+**Success Response (201 Created):**
 ```json
 {
-  "id": "uuid-string",
-  "username": "johndoe123",
-  "group_id": null,
-  "is_user_in_group": false,
-  "is_user_head": false,
-  "profile": {
-    "first_name": "John",
-    "last_name": "Doe",
-    "birth_date": "1990-01-01T00:00:00Z",
-    "phone_number": "09123456789"
-  },
-  "address": {
-    "street_name": "123 Main St",
-    "baranggay": "Brgy. San Jose",
-    "town": "Pasig City"
+  "message": "User created successfully",
+  "user": {
+    "id": "e2b2961e-1234-4b56-8a90-123456789abc",
+    "username": "johndoe123",
+    "group_id": null,
+    "is_user_in_group": false,
+    "is_user_head": false,
+    "is_deleted": false,
+    "created_at": "2026-04-05T10:00:00Z",
+    "updated_at": "2026-04-05T10:00:00Z",
+    "profile": {
+      "id": "f5c3a12b-...",
+      "user_id": "e2b2961e-1234-4b56-8a90-123456789abc",
+      "first_name": "John",
+      "middle_name": "D",
+      "last_name": "Doe",
+      "birth_date": "1990-01-01T00:00:00Z",
+      "phone_number": "09123456789"
+    },
+    "address": {
+      "id": "a1b2c3d4-...",
+      "user_id": "e2b2961e-1234-4b56-8a90-123456789abc",
+      "street_name": "123 Main St",
+      "baranggay": "Brgy. San Jose",
+      "town": "Pasig City",
+      "province": "Metro Manila",
+      "zip_code": "1600"
+    }
   }
 }
 ```
 
-### 3. Group Object Structure (Response)
+### 2. Login (❌ Public)
+`POST /api/users/login`
+
+**Request Payload:**
 ```json
 {
-  "id": "uuid-string",
-  "name": "Scarrow Tech Innovations",
-  "owner_id": "owner-uuid",
-  "members": []
+  "username": "johndoe123",
+  "password": "securepassword1"
 }
 ```
 
-### 4. Error Response Format (Standard)
+**Success Response (200 OK):**
 ```json
 {
-  "error": "Error message description here"
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3..."
+}
+```
+
+### 3. Check Username Exists (❌ Public)
+`GET /api/users/usernameExists?username=johndoe123`
+
+*No request body required.*
+
+**Success Response (200 OK):**
+```json
+{
+  "exists": true
+}
+```
+
+### 4. Get All Users (🔒 Protected)
+`GET /api/users/`
+
+*No request body required.*
+
+**Success Response (200 OK):**
+```json
+{
+  "users": [
+    {
+      "id": "e2b2961e-...",
+      "username": "johndoe123",
+      "group_id": null,
+      "is_user_in_group": false,
+      "is_user_head": false,
+      "is_deleted": false,
+      "created_at": "2026-04-05T10:00:00Z",
+      "updated_at": "2026-04-05T10:00:00Z",
+      "profile": null,
+      "address": null
+    }
+  ]
+}
+```
+
+### 5. Get User by ID (🔒 Protected)
+`GET /api/users/:userId`
+
+*No request body required.*
+
+**Success Response (200 OK):**
+*(Returns the full user object including nested profile and address, exactly like the Register response).*
+
+### 6. Update User / Partial Update (🔒 Protected)
+`PATCH /api/users/:userId`
+
+*Send ONLY the fields you want to update. Omitted fields remain untouched.*
+
+**Request Payload (Example):**
+```json
+{
+  "username": "newjohndoe",
+  "profile": {
+    "phone_number": "09999999999"
+  }
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "User updated successfully"
+}
+```
+
+### 7. Change Password (🔒 Protected)
+`POST /api/users/changePassword`
+
+**Request Payload:**
+```json
+{
+  "new_password": "mynewpassword123"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Password changed successfully"
+}
+```
+
+### 8. Soft Delete User (🔒 Protected)
+`PATCH /api/users/:userId/softDelete`
+
+*No request body required.*
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "User soft deleted successfully"
+}
+```
+
+---
+
+## 🏢 Groups / Companies Module (`/api/groups`)
+
+*⚠️ Strict Rule: A user can belong to **strictly one or zero** Groups (Companies). Trying to add a user to a group when they are already in one will fail.*
+
+### 1. Create a Group (🔒 Protected)
+`POST /api/groups/`
+
+**Request Payload:**
+```json
+{
+  "name": "Scarrow Tech Innovations"
+}
+```
+
+**Success Response (201 Created):**
+```json
+{
+  "message": "Group created successfully",
+  "group": {
+    "id": "b7d8e9f0-...",
+    "name": "Scarrow Tech Innovations",
+    "owner_id": "e2b2961e-1234...",
+    "is_deleted": false,
+    "created_at": "2026-04-05T10:00:00Z",
+    "updated_at": "2026-04-05T10:00:00Z",
+    "owner": null,
+    "members": null
+  }
+}
+```
+
+### 2. Get All Groups (🔒 Protected)
+`GET /api/groups/`
+
+*No request body required.*
+
+**Success Response (200 OK):**
+```json
+{
+  "groups": [
+    {
+      "id": "b7d8e9f0-...",
+      "name": "Scarrow Tech Innovations",
+      "owner_id": "e2b2961e-...",
+      "is_deleted": false,
+      "created_at": "...",
+      "updated_at": "...",
+      "owner": {
+        "id": "e2b2961e-...",
+        "username": "owneruser",
+        "...": "..."
+      },
+      "members": null
+    }
+  ]
+}
+```
+
+### 3. Get My Groups (Owned by Me) (🔒 Protected)
+`GET /api/groups/owner`
+
+*No request body required.*
+
+**Success Response (200 OK):** *(Returns array of groups exactly like Get All Groups).*
+
+### 4. Get Group by ID (🔒 Protected)
+`GET /api/groups/:groupId`
+
+*No request body required.*
+
+**Success Response (200 OK):** *(Returns single group object).*
+
+### 5. Rename Group (🔒 Protected)
+`PATCH /api/groups/:groupId`
+
+**Request Payload:**
+```json
+{
+  "name": "Scarrow Tech Innovations LLC"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Group updated successfully"
+}
+```
+
+### 6. Soft Delete Group (🔒 Protected)
+`PATCH /api/groups/:groupId/softDelete`
+
+*No request body required.*
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Group deleted successfully"
+}
+```
+
+### 7. Add Member to Group (🔒 Protected)
+`POST /api/groups/member`
+
+**Request Payload:**
+```json
+{
+  "group_id": "b7d8e9f0-...",
+  "username": "janedoe99"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Member added successfully"
+}
+```
+**Common Errors:**
+* `400 Bad Request`: `{"error": "user already belongs to a group/company"}`
+
+### 8. Remove Member from Group (🔒 Protected)
+`DELETE /api/groups/member`
+
+**Request Payload:**
+```json
+{
+  "group_id": "b7d8e9f0-...",
+  "user_id": "user-uuid-here"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Member removed successfully"
+}
+```
+
+### 9. Get Group Members (🔒 Protected)
+`GET /api/groups/:groupId/members`
+
+*No request body required.*
+
+**Success Response (200 OK):**
+```json
+{
+  "members": [
+    {
+      "id": "user-uuid-here",
+      "username": "janedoe99",
+      "group_id": "b7d8e9f0-...",
+      "is_user_in_group": true,
+      "...": "..."
+    }
+  ]
+}
+```
+
+---
+
+## 🚫 Standard Error Response
+If any request fails (Validation, Not Found, Conflict, Unauthorized), the API will return an appropriate HTTP Status Code and a JSON body in the following format:
+
+```json
+{
+  "error": "Detailed error message here"
 }
 ```

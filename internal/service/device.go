@@ -9,7 +9,7 @@ import (
 )
 
 type DeviceService interface {
-	CreateDevice(name string, ownerID string, ownerType string) (*models.Device, error)
+	CreateDevice(name string, userID string, ownerType string) (*models.Device, error)
 	GetAllDevices() ([]models.Device, error)
 	GetDeviceByID(id string) (*models.Device, error)
 	UpdateDevice(id string, name string, status string) error
@@ -19,8 +19,8 @@ type DeviceService interface {
 	AddOwner(deviceID, ownerID, ownerType string) error
 	RemoveOwner(deviceID, ownerID, ownerType string) error
 	GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwner, error)
-	GetDevicesByOwner(ownerID, ownerType string) ([]models.Device, error)
-	IsOwner(deviceID, ownerID string) (bool, error)
+	GetMyDevices(userID string) ([]models.Device, error)
+	IsOwner(deviceID, userID string) (bool, error)
 
 	// Logging
 	CreateLog(deviceID, logType, payload string) error
@@ -28,14 +28,35 @@ type DeviceService interface {
 }
 
 type deviceService struct {
-	repo repository.DeviceRepository
+	repo     repository.DeviceRepository
+	userRepo repository.UserRepository
 }
 
-func NewDeviceService(repo repository.DeviceRepository) DeviceService {
-	return &deviceService{repo: repo}
+func NewDeviceService(repo repository.DeviceRepository, userRepo repository.UserRepository) DeviceService {
+	return &deviceService{
+		repo:     repo,
+		userRepo: userRepo,
+	}
 }
 
-func (s *deviceService) CreateDevice(name string, ownerID string, ownerType string) (*models.Device, error) {
+func (s *deviceService) CreateDevice(name string, userID string, ownerType string) (*models.Device, error) {
+	// Determine the actual owner ID based on ownerType
+	actualOwnerID := userID
+
+	if ownerType == "GROUP" {
+		user, err := s.userRepo.FindByID(userID)
+		if err != nil {
+			return nil, err
+		}
+		if user == nil {
+			return nil, errors.New("user not found")
+		}
+		if user.GroupID == nil {
+			return nil, errors.New("user does not belong to a group")
+		}
+		actualOwnerID = *user.GroupID
+	}
+
 	device := &models.Device{
 		ID:     uuid.New().String(),
 		Name:   name,
@@ -50,14 +71,13 @@ func (s *deviceService) CreateDevice(name string, ownerID string, ownerType stri
 	// Add initial owner
 	owner := &models.DeviceOwner{
 		DeviceID:  device.ID,
-		OwnerID:   ownerID,
+		OwnerID:   actualOwnerID,
 		OwnerType: ownerType,
 	}
 
 	err = s.repo.AddOwner(owner)
 	if err != nil {
-		// Rollback device creation if owner add fails?
-		// For simplicity we just return the error here.
+		// Rollback device creation if owner add fails
 		return nil, err
 	}
 
@@ -119,12 +139,32 @@ func (s *deviceService) GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwn
 	return s.repo.GetOwnersByDeviceID(deviceID)
 }
 
-func (s *deviceService) GetDevicesByOwner(ownerID, ownerType string) ([]models.Device, error) {
-	return s.repo.GetDevicesByOwner(ownerID, ownerType)
+func (s *deviceService) GetMyDevices(userID string) ([]models.Device, error) {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	ownerIDs := []string{userID}
+	if user != nil && user.GroupID != nil {
+		ownerIDs = append(ownerIDs, *user.GroupID)
+	}
+
+	return s.repo.GetDevicesByOwnerIDs(ownerIDs)
 }
 
-func (s *deviceService) IsOwner(deviceID, ownerID string) (bool, error) {
-	return s.repo.IsOwner(deviceID, ownerID)
+func (s *deviceService) IsOwner(deviceID, userID string) (bool, error) {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return false, err
+	}
+
+	ownerIDs := []string{userID}
+	if user != nil && user.GroupID != nil {
+		ownerIDs = append(ownerIDs, *user.GroupID)
+	}
+
+	return s.repo.IsOwner(deviceID, ownerIDs)
 }
 
 func (s *deviceService) CreateLog(deviceID, logType, payload string) error {

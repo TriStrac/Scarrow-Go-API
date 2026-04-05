@@ -3,7 +3,6 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -54,13 +53,7 @@ func (c *DeviceController) CreateDevice(ctx *gin.Context) {
 		return
 	}
 
-	ownerID := callerID.(string)
-	// If owner_type is GROUP, user MUST specify the group_id (though not in my simplified req)
-	// For now, let's just assume the user is the owner if USER, and we'd need another field if they want it for a group.
-	// But let's keep it simple: the creator can specify the owner if they have permissions.
-	// However, for strict IDOR, creator should be the initial owner.
-
-	device, err := c.deviceService.CreateDevice(req.Name, ownerID, req.OwnerType)
+	device, err := c.deviceService.CreateDevice(req.Name, callerID.(string), req.OwnerType)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -280,7 +273,7 @@ func (c *DeviceController) GetMyDevices(ctx *gin.Context) {
 		return
 	}
 
-	devices, err := c.deviceService.GetDevicesByOwner(callerID.(string), "USER")
+	devices, err := c.deviceService.GetMyDevices(callerID.(string))
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

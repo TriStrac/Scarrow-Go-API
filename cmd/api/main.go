@@ -40,7 +40,7 @@ func main() {
 
 	// Dependency Injection for Device Domain
 	deviceRepo := repository.NewDeviceRepository(config.DB)
-	deviceService := service.NewDeviceService(deviceRepo)
+	deviceService := service.NewDeviceService(deviceRepo, userRepo)
 	deviceController := controllers.NewDeviceController(deviceService)
 
 	// Initialize Gin router

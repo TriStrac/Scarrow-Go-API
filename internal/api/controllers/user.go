@@ -93,6 +93,17 @@ func (c *UserController) GetUserByID(ctx *gin.Context) {
 
 func (c *UserController) UpdateUser(ctx *gin.Context) {
 	userId := ctx.Param("userId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Authorization Check: Users can only update themselves
+	if callerID.(string) != userId {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: You can only modify your own data"})
+		return
+	}
 
 	// We'll use the user model directly here for partial updates
 	var inputData models.User
@@ -135,6 +146,17 @@ func (c *UserController) ChangePassword(ctx *gin.Context) {
 
 func (c *UserController) SoftDeleteUser(ctx *gin.Context) {
 	userId := ctx.Param("userId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// Authorization Check: Users can only delete themselves
+	if callerID.(string) != userId {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: You can only delete your own account"})
+		return
+	}
 
 	err := c.userService.SoftDelete(userId)
 	if err != nil {

@@ -91,13 +91,31 @@ func (c *GroupController) GetGroupByID(ctx *gin.Context) {
 
 func (c *GroupController) UpdateGroup(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	group, err := c.groupService.GetGroupByID(groupID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Authorization Check: Only group owner can rename
+	if group.OwnerID != callerID.(string) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: Only the group owner can modify the group"})
+		return
+	}
+
 	var req UpdateGroupReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := c.groupService.UpdateGroup(groupID, req.Name)
+	err = c.groupService.UpdateGroup(groupID, req.Name)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -108,7 +126,25 @@ func (c *GroupController) UpdateGroup(ctx *gin.Context) {
 
 func (c *GroupController) SoftDeleteGroup(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
-	err := c.groupService.SoftDeleteGroup(groupID)
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	group, err := c.groupService.GetGroupByID(groupID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Authorization Check: Only group owner can delete
+	if group.OwnerID != callerID.(string) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: Only the group owner can delete the group"})
+		return
+	}
+
+	err = c.groupService.SoftDeleteGroup(groupID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -117,13 +153,31 @@ func (c *GroupController) SoftDeleteGroup(ctx *gin.Context) {
 }
 
 func (c *GroupController) AddMember(ctx *gin.Context) {
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	var req AddMemberReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := c.groupService.AddMemberByUsername(req.GroupID, req.Username)
+	group, err := c.groupService.GetGroupByID(req.GroupID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Authorization Check: Only group owner can add members
+	if group.OwnerID != callerID.(string) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: Only the group owner can add members"})
+		return
+	}
+
+	err = c.groupService.AddMemberByUsername(req.GroupID, req.Username)
 	if err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -133,13 +187,31 @@ func (c *GroupController) AddMember(ctx *gin.Context) {
 }
 
 func (c *GroupController) RemoveMember(ctx *gin.Context) {
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
 	var req RemoveMemberReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	err := c.groupService.RemoveMember(req.GroupID, req.UserID)
+	group, err := c.groupService.GetGroupByID(req.GroupID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Authorization Check: Only group owner OR the member themselves can remove
+	if group.OwnerID != callerID.(string) && req.UserID != callerID.(string) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: Only the group owner or the member themselves can remove a member"})
+		return
+	}
+
+	err = c.groupService.RemoveMember(req.GroupID, req.UserID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

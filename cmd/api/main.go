@@ -10,13 +10,22 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/TriStrac/Scarrow-Go-API/internal/api/controllers"
+	"github.com/TriStrac/Scarrow-Go-API/internal/api/routes"
 	"github.com/TriStrac/Scarrow-Go-API/internal/config"
+	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
+	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	// Initialize Database
 	config.InitDB()
+
+	// Dependency Injection for User Domain
+	userRepo := repository.NewUserRepository(config.DB)
+	userService := service.NewUserService(userRepo)
+	userController := controllers.NewUserController(userService)
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -28,6 +37,10 @@ func main() {
 			"message": "Scarrow-Go-API is running",
 		})
 	})
+
+	// Setup API Routes
+	apiGroup := router.Group("/api")
+	routes.SetupUserRoutes(apiGroup, userController)
 
 	// Configure the HTTP server
 	srv := &http.Server{

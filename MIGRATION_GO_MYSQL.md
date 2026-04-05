@@ -96,14 +96,14 @@ In Firestore, data was heavily denormalized and spread across disconnected docum
 All routes prefix: `/api`
 
 ### Users (`/users`)
-- [ ] `POST /` - Register
-- [ ] `POST /login` - Login (Username + Password)
-- [ ] `GET /` - Get all users
-- [ ] `GET /:userId` - Get user by ID (Joins profile & address)
-- [ ] `PATCH /:userId` - Update user/profile/address
-- [ ] `POST /changePassword` - Change Password
-- [ ] `PATCH /:userId/softDelete` - Soft delete
-- [ ] `GET /usernameExists` - Check if username is taken
+- [x] `POST /` - Register
+- [x] `POST /login` - Login (Username + Password)
+- [x] `GET /` - Get all users
+- [x] `GET /:userId` - Get user by ID (Joins profile & address)
+- [x] `PATCH /:userId` - Update user/profile/address
+- [x] `POST /changePassword` - Change Password
+- [x] `PATCH /:userId/softDelete` - Soft delete
+- [x] `GET /usernameExists` - Check if username is taken
 
 ### Groups (`/groups`)
 - [ ] `POST /` - Create Group
@@ -142,11 +142,11 @@ All routes prefix: `/api`
 - [x] Setup database Auto-Migration on startup.
 
 ### Phase 3: Core Domain Implementation (Users)
-- [ ] Create User Repository Interfaces and implementations (`internal/repository/user.go`).
-- [ ] Create User Service Interfaces and implementations (`internal/service/user.go`) for business logic (hashing, JWT).
-- [ ] Create User Controller (`internal/api/controllers/user.go`) with input validation.
-- [ ] Implement JWT Auth Middleware (`internal/api/middlewares/auth.go`).
-- [ ] Map and test User Routes (`internal/api/routes/user.go`).
+- [x] Create User Repository Interfaces and implementations (`internal/repository/user.go`).
+- [x] Create User Service Interfaces and implementations (`internal/service/user.go`) for business logic (hashing, JWT).
+- [x] Create User Controller (`internal/api/controllers/user.go`) with input validation.
+- [x] Implement JWT Auth Middleware (`internal/api/middlewares/auth.go`).
+- [x] Map and test User Routes (`internal/api/routes/user.go`).
 
 ### Phase 4: Core Domain Implementation (Groups)
 - [ ] Create Group Repository & Service (Interface-driven).
@@ -164,4 +164,4 @@ All routes prefix: `/api`
 - [ ] Final architecture review to ensure no circular dependencies and clean handover state.
 
 ---
-**Current Status:** Phase 2 Complete. Ready for Phase 3 (Core Domain: Users).
+**Current Status:** Phase 3 Complete. Ready for Phase 4 (Core Domain: Groups).

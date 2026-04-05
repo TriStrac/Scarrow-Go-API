@@ -121,54 +121,20 @@ func (s *groupService) AddMemberByUsername(groupID, username string) error {
 		return errors.New("user not found")
 	}
 
-	// 3. Check if user is already a member
-	isMember, err := s.groupRepo.IsMember(groupID, user.ID)
-	if err != nil {
-		return err
-	}
-	if isMember {
-		return errors.New("user is already a member of this group")
+	// 3. Check if user is already in a group (Company logic: strict 1-to-many)
+	if user.GroupID != nil && *user.GroupID != "" {
+		return errors.New("user already belongs to a group/company")
 	}
 
-	// 4. Add Member
-	groupMember := &models.GroupMember{
-		GroupID: groupID,
-		UserID:  user.ID,
-	}
-
-	err = s.groupRepo.AddMember(groupMember)
-	if err != nil {
-		return err
-	}
-
-	// 5. Update user to mark them as in a group (based on the legacy nodejs logic implied)
-	user.IsInGroup = true
-	return s.userRepo.UpdateUser(user)
+	// 4. Update the User's GroupID directly
+	return s.groupRepo.AddMember(groupID, user.ID)
 }
 
 func (s *groupService) RemoveMember(groupID, userID string) error {
-	// 1. Remove Member
-	err := s.groupRepo.RemoveMember(groupID, userID)
-	if err != nil {
-		return err
-	}
-
-	// 2. Check if the user is in ANY other groups
-	user, err := s.userRepo.FindByID(userID)
-	if err == nil && user != nil {
-		count, countErr := s.groupRepo.CountGroupsByUserID(userID)
-		if countErr == nil {
-			if count == 0 {
-				user.IsInGroup = false
-			} else {
-				user.IsInGroup = true
-			}
-			s.userRepo.UpdateUser(user)
-		}
-	}
-
-	return nil
+	// Remove Member (nullify GroupID)
+	return s.groupRepo.RemoveMember(groupID, userID)
 }
+
 func (s *groupService) GetGroupMembers(groupID string) ([]models.User, error) {
 	return s.groupRepo.FindMembersByGroupID(groupID)
 }

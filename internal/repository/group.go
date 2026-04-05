@@ -14,12 +14,11 @@ type GroupRepository interface {
 	FindByID(id string) (*models.Group, error)
 	UpdateGroup(group *models.Group) error
 	SoftDelete(id string) error
-	AddMember(groupMember *models.GroupMember) error
+	AddMember(groupID, userID string) error
 	RemoveMember(groupID, userID string) error
 	FindMembersByGroupID(groupID string) ([]models.User, error)
 	GroupNameExists(name string) (bool, error)
 	IsMember(groupID, userID string) (bool, error)
-	CountGroupsByUserID(userID string) (int64, error)
 }
 
 type groupRepository struct {
@@ -66,22 +65,26 @@ func (r *groupRepository) SoftDelete(id string) error {
 	return r.db.Model(&models.Group{}).Where("id = ?", id).Update("is_deleted", true).Delete(&models.Group{ID: id}).Error
 }
 
-func (r *groupRepository) AddMember(groupMember *models.GroupMember) error {
-	return r.db.Create(groupMember).Error
+func (r *groupRepository) AddMember(groupID, userID string) error {
+	// Directly update the user's group_id
+	return r.db.Model(&models.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
+		"group_id":         groupID,
+		"is_user_in_group": true,
+	}).Error
 }
 
 func (r *groupRepository) RemoveMember(groupID, userID string) error {
-	// Gorm Many-to-Many deletion or simply delete from join table
-	return r.db.Where("group_id = ? AND user_id = ?", groupID, userID).Delete(&models.GroupMember{}).Error
+	// Directly nullify the user's group_id
+	return r.db.Model(&models.User{}).Where("id = ? AND group_id = ?", userID, groupID).Updates(map[string]interface{}{
+		"group_id":         nil,
+		"is_user_in_group": false,
+	}).Error
 }
 
 func (r *groupRepository) FindMembersByGroupID(groupID string) ([]models.User, error) {
-	var group models.Group
-	err := r.db.Preload("Members").Where("id = ?", groupID).First(&group).Error
-	if err != nil {
-		return nil, err
-	}
-	return group.Members, nil
+	var users []models.User
+	err := r.db.Where("group_id = ?", groupID).Find(&users).Error
+	return users, err
 }
 
 func (r *groupRepository) GroupNameExists(name string) (bool, error) {
@@ -92,12 +95,6 @@ func (r *groupRepository) GroupNameExists(name string) (bool, error) {
 
 func (r *groupRepository) IsMember(groupID, userID string) (bool, error) {
 	var count int64
-	err := r.db.Model(&models.GroupMember{}).Where("group_id = ? AND user_id = ?", groupID, userID).Count(&count).Error
+	err := r.db.Model(&models.User{}).Where("id = ? AND group_id = ?", userID, groupID).Count(&count).Error
 	return count > 0, err
-}
-
-func (r *groupRepository) CountGroupsByUserID(userID string) (int64, error) {
-	var count int64
-	err := r.db.Model(&models.GroupMember{}).Where("user_id = ?", userID).Count(&count).Error
-	return count, err
 }

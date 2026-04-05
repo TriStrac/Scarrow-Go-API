@@ -15,12 +15,6 @@ type Group struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Owner     *User          `gorm:"foreignKey:OwnerID" json:"owner"`
-	Members   []User         `gorm:"many2many:group_members;" json:"members"`
-}
-
-type GroupMember struct {
-	GroupID  string    `gorm:"type:varchar(36);primaryKey" json:"group_id"`
-	UserID   string    `gorm:"type:varchar(36);primaryKey" json:"user_id"`
-	JoinedAt time.Time `gorm:"autoCreateTime" json:"joined_at"`
+	Owner   *User  `gorm:"foreignKey:OwnerID" json:"owner"`
+	Members []User `gorm:"foreignKey:GroupID" json:"members"`
 }

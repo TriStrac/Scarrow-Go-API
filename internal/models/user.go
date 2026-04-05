@@ -10,6 +10,7 @@ type User struct {
 	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
 	Username  string         `gorm:"type:varchar(100);unique;index;not null" json:"username"`
 	Password  string         `gorm:"type:varchar(255);not null" json:"-"`
+	GroupID   *string        `gorm:"type:varchar(36);index" json:"group_id"`
 	IsInGroup bool           `gorm:"default:false" json:"is_user_in_group"`
 	IsHead    bool           `gorm:"default:false" json:"is_user_head"`
 	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`

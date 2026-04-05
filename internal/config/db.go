@@ -60,7 +60,6 @@ func InitDB() {
 		&models.UserProfile{},
 		&models.UserAddress{},
 		&models.Group{},
-		&models.GroupMember{},
 		&models.Device{},
 		&models.DeviceOwner{},
 		&models.DeviceLog{},

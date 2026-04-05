@@ -19,6 +19,7 @@ type GroupRepository interface {
 	FindMembersByGroupID(groupID string) ([]models.User, error)
 	GroupNameExists(name string) (bool, error)
 	IsMember(groupID, userID string) (bool, error)
+	CountGroupsByUserID(userID string) (int64, error)
 }
 
 type groupRepository struct {
@@ -93,4 +94,10 @@ func (r *groupRepository) IsMember(groupID, userID string) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.GroupMember{}).Where("group_id = ? AND user_id = ?", groupID, userID).Count(&count).Error
 	return count > 0, err
+}
+
+func (r *groupRepository) CountGroupsByUserID(userID string) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.GroupMember{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, err
 }

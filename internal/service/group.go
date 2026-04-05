@@ -153,18 +153,22 @@ func (s *groupService) RemoveMember(groupID, userID string) error {
 		return err
 	}
 
-	// 2. We should ideally check if the user is in ANY other groups,
-	// but for simplicity mirroring the schema logic:
+	// 2. Check if the user is in ANY other groups
 	user, err := s.userRepo.FindByID(userID)
 	if err == nil && user != nil {
-		// Just a naive toggle - in a real app, you'd count the user's groups first.
-		user.IsInGroup = false
-		s.userRepo.UpdateUser(user)
+		count, countErr := s.groupRepo.CountGroupsByUserID(userID)
+		if countErr == nil {
+			if count == 0 {
+				user.IsInGroup = false
+			} else {
+				user.IsInGroup = true
+			}
+			s.userRepo.UpdateUser(user)
+		}
 	}
 
 	return nil
 }
-
 func (s *groupService) GetGroupMembers(groupID string) ([]models.User, error) {
 	return s.groupRepo.FindMembersByGroupID(groupID)
 }

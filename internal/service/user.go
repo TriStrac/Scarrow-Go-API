@@ -120,37 +120,47 @@ func (s *userService) UpdateUser(id string, inputData *models.User) error {
 	}
 
 	// Update Profile (if provided)
-	if inputData.Profile.FirstName != "" {
-		user.Profile.FirstName = inputData.Profile.FirstName
-	}
-	if inputData.Profile.MiddleName != "" {
-		user.Profile.MiddleName = inputData.Profile.MiddleName
-	}
-	if inputData.Profile.LastName != "" {
-		user.Profile.LastName = inputData.Profile.LastName
-	}
-	if inputData.Profile.PhoneNumber != "" {
-		user.Profile.PhoneNumber = inputData.Profile.PhoneNumber
-	}
-	if !inputData.Profile.BirthDate.IsZero() {
-		user.Profile.BirthDate = inputData.Profile.BirthDate
+	if inputData.Profile != nil {
+		if user.Profile == nil {
+			user.Profile = &models.UserProfile{ID: uuid.New().String(), UserID: user.ID}
+		}
+		if inputData.Profile.FirstName != "" {
+			user.Profile.FirstName = inputData.Profile.FirstName
+		}
+		if inputData.Profile.MiddleName != "" {
+			user.Profile.MiddleName = inputData.Profile.MiddleName
+		}
+		if inputData.Profile.LastName != "" {
+			user.Profile.LastName = inputData.Profile.LastName
+		}
+		if inputData.Profile.PhoneNumber != "" {
+			user.Profile.PhoneNumber = inputData.Profile.PhoneNumber
+		}
+		if !inputData.Profile.BirthDate.IsZero() {
+			user.Profile.BirthDate = inputData.Profile.BirthDate
+		}
 	}
 
 	// Update Address (if provided)
-	if inputData.Address.StreetName != "" {
-		user.Address.StreetName = inputData.Address.StreetName
-	}
-	if inputData.Address.Baranggay != "" {
-		user.Address.Baranggay = inputData.Address.Baranggay
-	}
-	if inputData.Address.Town != "" {
-		user.Address.Town = inputData.Address.Town
-	}
-	if inputData.Address.Province != "" {
-		user.Address.Province = inputData.Address.Province
-	}
-	if inputData.Address.ZipCode != "" {
-		user.Address.ZipCode = inputData.Address.ZipCode
+	if inputData.Address != nil {
+		if user.Address == nil {
+			user.Address = &models.UserAddress{ID: uuid.New().String(), UserID: user.ID}
+		}
+		if inputData.Address.StreetName != "" {
+			user.Address.StreetName = inputData.Address.StreetName
+		}
+		if inputData.Address.Baranggay != "" {
+			user.Address.Baranggay = inputData.Address.Baranggay
+		}
+		if inputData.Address.Town != "" {
+			user.Address.Town = inputData.Address.Town
+		}
+		if inputData.Address.Province != "" {
+			user.Address.Province = inputData.Address.Province
+		}
+		if inputData.Address.ZipCode != "" {
+			user.Address.ZipCode = inputData.Address.ZipCode
+		}
 	}
 
 	return s.repo.UpdateUser(user)

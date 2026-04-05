@@ -43,8 +43,8 @@ func (c *UserController) Register(ctx *gin.Context) {
 	user := &models.User{
 		Username: req.Username,
 		Password: req.Password,
-		Profile:  req.Profile,
-		Address:  req.Address,
+		Profile:  &req.Profile,
+		Address:  &req.Address,
 	}
 
 	createdUser, err := c.userService.Register(user)

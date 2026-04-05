@@ -18,6 +18,9 @@
 .env
 .env.*
 
+# Internal AI Tracking File
+MIGRATION_GO_MYSQL.md
+
 # IDEs
 .idea/
 .vscode/

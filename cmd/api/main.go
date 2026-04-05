@@ -27,6 +27,11 @@ func main() {
 	userService := service.NewUserService(userRepo)
 	userController := controllers.NewUserController(userService)
 
+	// Dependency Injection for Group Domain
+	groupRepo := repository.NewGroupRepository(config.DB)
+	groupService := service.NewGroupService(groupRepo, userRepo)
+	groupController := controllers.NewGroupController(groupService)
+
 	// Initialize Gin router
 	router := gin.Default()
 
@@ -41,6 +46,7 @@ func main() {
 	// Setup API Routes
 	apiGroup := router.Group("/api")
 	routes.SetupUserRoutes(apiGroup, userController)
+	routes.SetupGroupRoutes(apiGroup, groupController)
 
 	// Configure the HTTP server
 	srv := &http.Server{

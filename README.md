@@ -1,35 +1,56 @@
-# Scarrow-Go-API 🚀
+# Scarrow-Go-API - Frontend Integration Guide 🚀
 
-This is the Go/MySQL refactor of the ScarrowAPI. This document is written specifically for Frontend/Mobile developers to easily integrate with the backend endpoints.
+This guide provides everything a frontend developer needs to integrate with the Scarrow Backend.
 
-## 🔑 Authentication (JWT)
-All protected endpoints require an `Authorization` header containing the JWT token received from the Login endpoint.
-```http
-Authorization: Bearer <your_jwt_token_here>
-```
-*Note: If the token is missing, malformed, or expired, the server will return a `401 Unauthorized`.*
+**Base URL:** `http://localhost:8080` (Local) / `https://api.scarrow.com` (Production)
 
 ---
 
-## 👥 Users Domain (`/api/users`)
+## 🔑 Global Configuration
 
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| `POST` | `/api/users/` | ❌ | Register a new user |
-| `POST` | `/api/users/login` | ❌ | Login and receive JWT |
-| `GET` | `/api/users/usernameExists?username={name}` | ❌ | Check if a username is taken |
-| `GET` | `/api/users/` | 🔒 | Get all users |
-| `GET` | `/api/users/:userId` | 🔒 | Get user by ID (Includes Profile/Address) |
-| `PATCH` | `/api/users/:userId` | 🔒 | Update user (Supports Partial Updates) |
-| `POST` | `/api/users/changePassword` | 🔒 | Change logged-in user's password |
-| `PATCH` | `/api/users/:userId/softDelete`| 🔒 | Soft delete user |
+### Headers
+All protected endpoints (`🔒`) require the following header:
+| Header | Value | Description |
+| :--- | :--- | :--- |
+| `Content-Type` | `application/json` | Required for all POST/PATCH requests |
+| `Authorization` | `Bearer <token>` | Required for all protected routes |
 
-### User Endpoints Detailed Payloads
+---
 
-<details>
-<summary><b><code>POST /api/users/</code> - Register User</b></summary>
+## 👥 Users Module (`/api/users`)
 
-**Request Payload:**
+| Method | Endpoint | Auth | Description | Request Payload | Success Response (200/201) | Common Errors |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/` | ❌ | **Register** | `{ "username": "...", "password": "...", "profile": {...}, "address": {...} }` | `{ "message": "...", "user": {...} }` | `400`: Validation<br>`409`: Username taken |
+| `POST` | `/login` | ❌ | **Login** | `{ "username": "...", "password": "..." }` | `{ "token": "eyJhbG..." }` | `401`: Invalid credentials |
+| `GET` | `/usernameExists` | ❌ | **Check User** | `?username=johndoe` (Query) | `{ "exists": true }` | `400`: Missing param |
+| `GET` | `/` | 🔒 | **List All** | `None` | `{ "users": [...] }` | `401`: Unauthorized |
+| `GET` | `/:userId` | 🔒 | **Get Info** | `None` | `{ "user": {...} }` | `404`: Not found |
+| `PATCH`| `/:userId` | 🔒 | **Update** | `{ "username": "...", "profile": {...} }` | `{ "message": "Updated" }` | `400`: Bad Payload |
+| `POST` | `/changePassword`| 🔒 | **Password** | `{ "new_password": "..." }` | `{ "message": "Changed" }` | `400`: Min length 6 |
+| `PATCH`| `/:userId/softDelete`| 🔒 | **Delete** | `None` | `{ "message": "Deleted" }` | `404`: Not found |
+
+---
+
+## 🏢 Groups / Companies Module (`/api/groups`)
+*Note: A user can belong to **strictly one or zero** Groups. Addition will fail if the user is already employed.*
+
+| Method | Endpoint | Auth | Description | Request Payload | Success Response (200/201) | Common Errors |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `POST` | `/` | 🔒 | **Create** | `{ "name": "Company Name" }` | `{ "message": "Created", "group": {...} }` | `409`: Name taken |
+| `GET` | `/` | 🔒 | **List All** | `None` | `{ "groups": [...] }` | `401`: Unauthorized |
+| `GET` | `/owner` | 🔒 | **My Groups** | `None` | `{ "groups": [...] }` | `401`: Unauthorized |
+| `GET` | `/:groupId` | 🔒 | **Get Group** | `None` | `{ "group": {...} }` | `404`: Not found |
+| `PATCH`| `/:groupId` | 🔒 | **Rename** | `{ "name": "New Name" }` | `{ "message": "Updated" }` | `409`: Name taken |
+| `POST` | `/member` | 🔒 | **Add Member**| `{ "group_id": "...", "username": "..." }` | `{ "message": "Added" }` | `400`: User in another group |
+| `DELETE`| `/member` | 🔒 | **Remove** | `{ "group_id": "...", "user_id": "..." }` | `{ "message": "Removed" }` | `404`: Not found |
+| `GET` | `/:groupId/members`| 🔒 | **Members** | `None` | `{ "members": [...] }` | `404`: Not found |
+
+---
+
+## 📦 Implementation Reference (JSON Samples)
+
+### 1. Register User (Full Body)
 ```json
 {
   "username": "johndoe123",
@@ -50,192 +71,42 @@ Authorization: Bearer <your_jwt_token_here>
   }
 }
 ```
-**Expected Responses:**
-* `201 Created`: `{ "message": "User created successfully", "user": { ...user_object } }`
-* `400 Bad Request`: Validation errors (missing fields)
-* `409 Conflict`: `{"error": "username already exists"}`
-</details>
 
-<details>
-<summary><b><code>POST /api/users/login</code> - Login</b></summary>
-
-**Request Payload:**
+### 2. User Object Structure (Response)
 ```json
 {
+  "id": "uuid-string",
   "username": "johndoe123",
-  "password": "securepassword1"
-}
-```
-**Expected Responses:**
-* `200 OK`: `{ "token": "eyJhbGciOiJIUzI1NiIsInR5..." }`
-* `401 Unauthorized`: `{"error": "invalid username or password"}`
-</details>
-
-<details>
-<summary><b><code>GET /api/users/usernameExists?username=...</code> - Check Username</b></summary>
-
-*No body required. Pass username in URL query.*
-**Expected Response (200):**
-```json
-{
-  "exists": true
-}
-```
-</details>
-
-<details>
-<summary><b><code>PATCH /api/users/:userId</code> - Partial Update</b></summary>
-
-*You only need to send the fields you want to update. Omitted fields are ignored.*
-**Request Payload (Example):**
-```json
-{
-  "username": "newjohndoe",
+  "group_id": null,
+  "is_user_in_group": false,
+  "is_user_head": false,
   "profile": {
-    "phone_number": "09999999999"
+    "first_name": "John",
+    "last_name": "Doe",
+    "birth_date": "1990-01-01T00:00:00Z",
+    "phone_number": "09123456789"
+  },
+  "address": {
+    "street_name": "123 Main St",
+    "baranggay": "Brgy. San Jose",
+    "town": "Pasig City"
   }
 }
 ```
-**Expected Responses:**
-* `200 OK`: `{ "message": "User updated successfully" }`
-* `409 Conflict`: `{"error": "username already exists"}`
-</details>
 
-<details>
-<summary><b><code>POST /api/users/changePassword</code> - Change Password</b></summary>
-
-**Request Payload:**
+### 3. Group Object Structure (Response)
 ```json
 {
-  "new_password": "mynewpassword123"
+  "id": "uuid-string",
+  "name": "Scarrow Tech Innovations",
+  "owner_id": "owner-uuid",
+  "members": []
 }
 ```
-**Expected Response (200):** `{ "message": "Password changed successfully" }`
-</details>
 
----
-
-## 🏢 Groups / Companies Domain (`/api/groups`)
-*⚠️ Strict Rule: A user can belong to **strictly one or zero** Groups (Companies). Trying to add a user to a group when they are already in one will fail.*
-
-| Method | Endpoint | Auth | Purpose |
-|--------|----------|------|---------|
-| `POST` | `/api/groups/` | 🔒 | Create a new group (company) |
-| `GET` | `/api/groups/` | 🔒 | Get all groups |
-| `GET` | `/api/groups/owner` | 🔒 | Get all groups owned by logged-in user |
-| `GET` | `/api/groups/:groupId` | 🔒 | Get group by ID (Includes members) |
-| `PATCH` | `/api/groups/:groupId` | 🔒 | Rename the group |
-| `PATCH` | `/api/groups/:groupId/softDelete`| 🔒 | Soft delete the group |
-| `POST` | `/api/groups/member` | 🔒 | Add a member to the group (by username) |
-| `DELETE` | `/api/groups/member` | 🔒 | Remove a member from the group |
-| `GET` | `/api/groups/:groupId/members` | 🔒 | Get an array of all users in the group |
-
-### Group Endpoints Detailed Payloads
-
-<details>
-<summary><b><code>POST /api/groups/</code> - Create Group</b></summary>
-
-**Request Payload:**
+### 4. Error Response Format (Standard)
 ```json
 {
-  "name": "Scarrow Tech Innovations"
-}
-```
-**Expected Responses:**
-* `201 Created`: `{ "message": "Group created successfully", "group": { ...group_object } }`
-* `409 Conflict`: `{"error": "group name already exists"}`
-</details>
-
-<details>
-<summary><b><code>PATCH /api/groups/:groupId</code> - Rename Group</b></summary>
-
-**Request Payload:**
-```json
-{
-  "name": "Scarrow Tech Innovations LLC"
-}
-```
-**Expected Response (200):** `{ "message": "Group updated successfully" }`
-</details>
-
-<details>
-<summary><b><code>POST /api/groups/member</code> - Add Member to Group</b></summary>
-
-**Request Payload:**
-```json
-{
-  "group_id": "uuid-of-the-group",
-  "username": "janedoe99"
-}
-```
-**Expected Responses:**
-* `200 OK`: `{ "message": "Member added successfully" }`
-* `400 Bad Request`: `{"error": "user not found"}` OR `{"error": "user already belongs to a group/company"}`
-</details>
-
-<details>
-<summary><b><code>DELETE /api/groups/member</code> - Remove Member from Group</b></summary>
-
-**Request Payload:**
-```json
-{
-  "group_id": "uuid-of-the-group",
-  "user_id": "uuid-of-the-user"
-}
-```
-**Expected Response (200):** `{ "message": "Member removed successfully" }`
-</details>
-
----
-
-## 🛠 Standard Model Structures (For Typescript Interfaces)
-
-### User Object
-```typescript
-interface User {
-  id: string;
-  username: string;
-  is_user_in_group: boolean;
-  is_user_head: boolean;
-  is_deleted: boolean;
-  group_id: string | null;
-  created_at: string; // ISO 8601 Date
-  updated_at: string;
-  profile: UserProfile | null;
-  address: UserAddress | null;
-}
-
-interface UserProfile {
-  id: string;
-  user_id: string;
-  first_name: string;
-  middle_name: string;
-  last_name: string;
-  birth_date: string; // ISO 8601 Date
-  phone_number: string;
-}
-
-interface UserAddress {
-  id: string;
-  user_id: string;
-  street_name: string;
-  baranggay: string;
-  town: string;
-  province: string;
-  zip_code: string;
-}
-```
-
-### Group Object
-```typescript
-interface Group {
-  id: string;
-  name: string;
-  owner_id: string;
-  is_deleted: boolean;
-  created_at: string;
-  updated_at: string;
-  owner: User | null;
-  members: User[] | null;
+  "error": "Error message description here"
 }
 ```

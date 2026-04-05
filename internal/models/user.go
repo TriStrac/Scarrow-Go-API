@@ -18,8 +18,8 @@ type User struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Profile       *UserProfile   `gorm:"foreignKey:UserID" json:"profile"`
-	Address       *UserAddress   `gorm:"foreignKey:UserID" json:"address"`
+	Profile *UserProfile `gorm:"foreignKey:UserID" json:"profile"`
+	Address *UserAddress `gorm:"foreignKey:UserID" json:"address"`
 }
 
 type UserProfile struct {

@@ -123,7 +123,12 @@ All routes prefix: `/api`
 
 ## 6. Step-by-Step Execution Plan
 
-**AI Agent Instructions:** When asked to start or continue, find the first unchecked `[ ]` step and execute it. After successful completion, mark it with `[x]` and wait for the next prompt.
+**AI Agent Instructions:** When asked to start or continue, find the first unchecked `[ ]` step and execute it. After successful completion, mark it with `[x]`. 
+**CRITICAL:** At the end of EVERY phase, you MUST:
+1. Run `go fmt ./...` and `go mod tidy`.
+2. Commit your changes with a descriptive, conventional commit message.
+3. Push the changes to the remote repository.
+4. Wait for the next prompt.
 
 ### Phase 1: Go Project Initialization & Skeleton
 - [x] Initialize Go Module (`go mod init github.com/TriStrac/ScarrowAPI-Go`).
@@ -132,9 +137,9 @@ All routes prefix: `/api`
 - [x] Create `main.go`, setup Graceful Shutdown, and configure basic Gin router.
 
 ### Phase 2: Database & Configuration Setup
-- [ ] Create database configuration file and connection logic with pooling (`internal/config/db.go`).
-- [ ] Write GORM models (Entities) reflecting the Relational Schema (Section 4), ensuring proper struct tags and foreign keys.
-- [ ] Setup database Auto-Migration on startup.
+- [x] Create database configuration file and connection logic with pooling (`internal/config/db.go`).
+- [x] Write GORM models (Entities) reflecting the Relational Schema (Section 4), ensuring proper struct tags and foreign keys.
+- [x] Setup database Auto-Migration on startup.
 
 ### Phase 3: Core Domain Implementation (Users)
 - [ ] Create User Repository Interfaces and implementations (`internal/repository/user.go`).
@@ -159,4 +164,4 @@ All routes prefix: `/api`
 - [ ] Final architecture review to ensure no circular dependencies and clean handover state.
 
 ---
-**Current Status:** Phase 1 Complete. Ready for Phase 2 (Database setup).
+**Current Status:** Phase 2 Complete. Ready for Phase 3 (Core Domain: Users).

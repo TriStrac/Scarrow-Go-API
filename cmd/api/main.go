@@ -10,10 +10,14 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/TriStrac/Scarrow-Go-API/internal/config"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
+	// Initialize Database
+	config.InitDB()
+
 	// Initialize Gin router
 	router := gin.Default()
 

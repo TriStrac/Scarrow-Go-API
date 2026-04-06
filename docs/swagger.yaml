@@ -1,0 +1,492 @@
+info:
+  contact: {}
+  description: Backend API for Scarrow
+  title: Scarrow API
+  version: "1.0"
+paths:
+  /activityLogs/getalllogs:
+    post:
+      consumes:
+      - application/json
+      description: GetAllLogs endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetAllLogs
+      tags:
+      - activityLogs
+  /activityLogs/getmylogs:
+    post:
+      consumes:
+      - application/json
+      description: GetMyLogs endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetMyLogs
+      tags:
+      - activityLogs
+  /device/addowner:
+    post:
+      consumes:
+      - application/json
+      description: AddOwner endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: AddOwner
+      tags:
+      - device
+  /device/createdevice:
+    post:
+      consumes:
+      - application/json
+      description: CreateDevice endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: CreateDevice
+      tags:
+      - device
+  /device/createlog:
+    post:
+      consumes:
+      - application/json
+      description: CreateLog endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: CreateLog
+      tags:
+      - device
+  /device/getalldevices:
+    post:
+      consumes:
+      - application/json
+      description: GetAllDevices endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetAllDevices
+      tags:
+      - device
+  /device/getdevicebyid:
+    post:
+      consumes:
+      - application/json
+      description: GetDeviceByID endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetDeviceByID
+      tags:
+      - device
+  /device/getlogs:
+    post:
+      consumes:
+      - application/json
+      description: GetLogs endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetLogs
+      tags:
+      - device
+  /device/getmydevices:
+    post:
+      consumes:
+      - application/json
+      description: GetMyDevices endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetMyDevices
+      tags:
+      - device
+  /device/getowners:
+    post:
+      consumes:
+      - application/json
+      description: GetOwners endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetOwners
+      tags:
+      - device
+  /device/removeowner:
+    post:
+      consumes:
+      - application/json
+      description: RemoveOwner endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: RemoveOwner
+      tags:
+      - device
+  /device/softdeletedevice:
+    post:
+      consumes:
+      - application/json
+      description: SoftDeleteDevice endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: SoftDeleteDevice
+      tags:
+      - device
+  /device/updatedevice:
+    post:
+      consumes:
+      - application/json
+      description: UpdateDevice endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: UpdateDevice
+      tags:
+      - device
+  /groups/addmember:
+    post:
+      consumes:
+      - application/json
+      description: AddMember endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: AddMember
+      tags:
+      - groups
+  /groups/creategroup:
+    post:
+      consumes:
+      - application/json
+      description: CreateGroup endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: CreateGroup
+      tags:
+      - groups
+  /groups/getallgroups:
+    post:
+      consumes:
+      - application/json
+      description: GetAllGroups endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetAllGroups
+      tags:
+      - groups
+  /groups/getgroupbyid:
+    post:
+      consumes:
+      - application/json
+      description: GetGroupByID endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetGroupByID
+      tags:
+      - groups
+  /groups/getgroupmembers:
+    post:
+      consumes:
+      - application/json
+      description: GetGroupMembers endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetGroupMembers
+      tags:
+      - groups
+  /groups/getgroupsbyowner:
+    post:
+      consumes:
+      - application/json
+      description: GetGroupsByOwner endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetGroupsByOwner
+      tags:
+      - groups
+  /groups/removemember:
+    post:
+      consumes:
+      - application/json
+      description: RemoveMember endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: RemoveMember
+      tags:
+      - groups
+  /groups/softdeletegroup:
+    post:
+      consumes:
+      - application/json
+      description: SoftDeleteGroup endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: SoftDeleteGroup
+      tags:
+      - groups
+  /groups/updategroup:
+    post:
+      consumes:
+      - application/json
+      description: UpdateGroup endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: UpdateGroup
+      tags:
+      - groups
+  /users/changepassword:
+    post:
+      consumes:
+      - application/json
+      description: ChangePassword endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: ChangePassword
+      tags:
+      - users
+  /users/checkusernameexists:
+    post:
+      consumes:
+      - application/json
+      description: CheckUsernameExists endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: CheckUsernameExists
+      tags:
+      - users
+  /users/getallusers:
+    post:
+      consumes:
+      - application/json
+      description: GetAllUsers endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetAllUsers
+      tags:
+      - users
+  /users/getuserbyid:
+    post:
+      consumes:
+      - application/json
+      description: GetUserByID endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: GetUserByID
+      tags:
+      - users
+  /users/login:
+    post:
+      consumes:
+      - application/json
+      description: Login endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login
+      tags:
+      - users
+  /users/register:
+    post:
+      consumes:
+      - application/json
+      description: Register endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register
+      tags:
+      - users
+  /users/softdeleteuser:
+    post:
+      consumes:
+      - application/json
+      description: SoftDeleteUser endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: SoftDeleteUser
+      tags:
+      - users
+  /users/updateuser:
+    post:
+      consumes:
+      - application/json
+      description: UpdateUser endpoint
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: UpdateUser
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

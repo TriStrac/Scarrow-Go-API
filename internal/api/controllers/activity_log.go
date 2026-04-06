@@ -15,6 +15,14 @@ func NewActivityLogController(activityLogService service.ActivityLogService) *Ac
 	return &ActivityLogController{activityLogService: activityLogService}
 }
 
+// GetMyLogs godoc
+// @Summary GetMyLogs
+// @Description GetMyLogs endpoint
+// @Tags activityLogs
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /activityLogs/getmylogs [post]
 func (c *ActivityLogController) GetMyLogs(ctx *gin.Context) {
 	callerID, exists := ctx.Get("userID")
 	if !exists {
@@ -30,6 +38,14 @@ func (c *ActivityLogController) GetMyLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"logs": logs})
 }
 
+// GetAllLogs godoc
+// @Summary GetAllLogs
+// @Description GetAllLogs endpoint
+// @Tags activityLogs
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /activityLogs/getalllogs [post]
 func (c *ActivityLogController) GetAllLogs(ctx *gin.Context) {
 	// Usually admin only, but for now we allow anyone with a token
 	logs, err := c.activityLogService.GetAllLogs()

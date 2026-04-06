@@ -33,6 +33,14 @@ type ChangePasswordReq struct {
 	NewPassword string `json:"new_password" binding:"required,min=6"`
 }
 
+// Register godoc
+// @Summary Register
+// @Description Register endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/register [post]
 func (c *UserController) Register(ctx *gin.Context) {
 	var req RegisterReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -56,6 +64,14 @@ func (c *UserController) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "User created successfully", "user": createdUser})
 }
 
+// Login godoc
+// @Summary Login
+// @Description Login endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/login [post]
 func (c *UserController) Login(ctx *gin.Context) {
 	var req LoginReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -72,6 +88,14 @@ func (c *UserController) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"token": token})
 }
 
+// GetAllUsers godoc
+// @Summary GetAllUsers
+// @Description GetAllUsers endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/getallusers [post]
 func (c *UserController) GetAllUsers(ctx *gin.Context) {
 	users, err := c.userService.GetAllUsers()
 	if err != nil {
@@ -81,6 +105,14 @@ func (c *UserController) GetAllUsers(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"users": users})
 }
 
+// GetUserByID godoc
+// @Summary GetUserByID
+// @Description GetUserByID endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/getuserbyid [post]
 func (c *UserController) GetUserByID(ctx *gin.Context) {
 	userId := ctx.Param("userId")
 	user, err := c.userService.GetUserByID(userId)
@@ -91,6 +123,14 @@ func (c *UserController) GetUserByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"user": user})
 }
 
+// UpdateUser godoc
+// @Summary UpdateUser
+// @Description UpdateUser endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/updateuser [post]
 func (c *UserController) UpdateUser(ctx *gin.Context) {
 	userId := ctx.Param("userId")
 	callerID, exists := ctx.Get("userID")
@@ -121,6 +161,14 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "User updated successfully"})
 }
 
+// ChangePassword godoc
+// @Summary ChangePassword
+// @Description ChangePassword endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/changepassword [post]
 func (c *UserController) ChangePassword(ctx *gin.Context) {
 	// The User ID should ideally be extracted from the JWT token via middleware
 	userId, exists := ctx.Get("userID")
@@ -144,6 +192,14 @@ func (c *UserController) ChangePassword(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Password changed successfully"})
 }
 
+// SoftDeleteUser godoc
+// @Summary SoftDeleteUser
+// @Description SoftDeleteUser endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/softdeleteuser [post]
 func (c *UserController) SoftDeleteUser(ctx *gin.Context) {
 	userId := ctx.Param("userId")
 	callerID, exists := ctx.Get("userID")
@@ -167,6 +223,14 @@ func (c *UserController) SoftDeleteUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "User soft deleted successfully"})
 }
 
+// CheckUsernameExists godoc
+// @Summary CheckUsernameExists
+// @Description CheckUsernameExists endpoint
+// @Tags users
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /users/checkusernameexists [post]
 func (c *UserController) CheckUsernameExists(ctx *gin.Context) {
 	username := ctx.Query("username")
 	if username == "" {

@@ -33,6 +33,14 @@ type RemoveMemberReq struct {
 	UserID  string `json:"user_id" binding:"required"`
 }
 
+// CreateGroup godoc
+// @Summary CreateGroup
+// @Description CreateGroup endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/creategroup [post]
 func (c *GroupController) CreateGroup(ctx *gin.Context) {
 	ownerID, exists := ctx.Get("userID")
 	if !exists {
@@ -55,6 +63,14 @@ func (c *GroupController) CreateGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Group created successfully", "group": group})
 }
 
+// GetAllGroups godoc
+// @Summary GetAllGroups
+// @Description GetAllGroups endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/getallgroups [post]
 func (c *GroupController) GetAllGroups(ctx *gin.Context) {
 	groups, err := c.groupService.GetAllGroups()
 	if err != nil {
@@ -64,6 +80,14 @@ func (c *GroupController) GetAllGroups(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"groups": groups})
 }
 
+// GetGroupsByOwner godoc
+// @Summary GetGroupsByOwner
+// @Description GetGroupsByOwner endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/getgroupsbyowner [post]
 func (c *GroupController) GetGroupsByOwner(ctx *gin.Context) {
 	ownerID, exists := ctx.Get("userID")
 	if !exists {
@@ -79,6 +103,14 @@ func (c *GroupController) GetGroupsByOwner(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"groups": groups})
 }
 
+// GetGroupByID godoc
+// @Summary GetGroupByID
+// @Description GetGroupByID endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/getgroupbyid [post]
 func (c *GroupController) GetGroupByID(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
 	group, err := c.groupService.GetGroupByID(groupID)
@@ -89,6 +121,14 @@ func (c *GroupController) GetGroupByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"group": group})
 }
 
+// UpdateGroup godoc
+// @Summary UpdateGroup
+// @Description UpdateGroup endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/updategroup [post]
 func (c *GroupController) UpdateGroup(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
 	callerID, exists := ctx.Get("userID")
@@ -124,6 +164,14 @@ func (c *GroupController) UpdateGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Group updated successfully"})
 }
 
+// SoftDeleteGroup godoc
+// @Summary SoftDeleteGroup
+// @Description SoftDeleteGroup endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/softdeletegroup [post]
 func (c *GroupController) SoftDeleteGroup(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
 	callerID, exists := ctx.Get("userID")
@@ -152,6 +200,14 @@ func (c *GroupController) SoftDeleteGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Group deleted successfully"})
 }
 
+// AddMember godoc
+// @Summary AddMember
+// @Description AddMember endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/addmember [post]
 func (c *GroupController) AddMember(ctx *gin.Context) {
 	callerID, exists := ctx.Get("userID")
 	if !exists {
@@ -186,6 +242,14 @@ func (c *GroupController) AddMember(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Member added successfully"})
 }
 
+// RemoveMember godoc
+// @Summary RemoveMember
+// @Description RemoveMember endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/removemember [post]
 func (c *GroupController) RemoveMember(ctx *gin.Context) {
 	callerID, exists := ctx.Get("userID")
 	if !exists {
@@ -220,6 +284,14 @@ func (c *GroupController) RemoveMember(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Member removed successfully"})
 }
 
+// GetGroupMembers godoc
+// @Summary GetGroupMembers
+// @Description GetGroupMembers endpoint
+// @Tags groups
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router /groups/getgroupmembers [post]
 func (c *GroupController) GetGroupMembers(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
 	members, err := c.groupService.GetGroupMembers(groupID)

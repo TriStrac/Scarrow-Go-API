@@ -30,7 +30,8 @@ func InitDB() {
 		dbUser, dbPassword, dbHost, dbPort, dbName)
 
 	config := &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger:                                   logger.Default.LogMode(logger.Info),
+		DisableForeignKeyConstraintWhenMigrating: true,
 	}
 
 	db, err := gorm.Open(mysql.Open(dsn), config)

@@ -15,6 +15,6 @@ type Group struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Owner   *User  `gorm:"foreignKey:OwnerID" json:"owner"`
-	Members []User `gorm:"foreignKey:GroupID" json:"members"`
+	Owner   *User  `gorm:"foreignKey:OwnerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"owner"`
+	Members []User `gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"members"`
 }

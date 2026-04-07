@@ -11,6 +11,7 @@ type User struct {
 	Username  string         `gorm:"type:varchar(100);unique;index;not null" json:"username"`
 	Password  string         `gorm:"type:varchar(255);not null" json:"-"`
 	GroupID   *string        `gorm:"type:varchar(36);index" json:"group_id"`
+	Group     *Group         `gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
 	IsInGroup bool           `gorm:"default:false" json:"is_user_in_group"`
 	IsHead    bool           `gorm:"default:false" json:"is_user_head"`
 	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`
@@ -18,8 +19,8 @@ type User struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Profile *UserProfile `gorm:"foreignKey:UserID" json:"profile"`
-	Address *UserAddress `gorm:"foreignKey:UserID" json:"address"`
+	Profile *UserProfile `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"profile"`
+	Address *UserAddress `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"address"`
 }
 
 type UserProfile struct {

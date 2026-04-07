@@ -53,10 +53,10 @@ func InitDB() {
 
 	// Auto Migration
 	err = db.AutoMigrate(
+		&models.Group{}, // Must be created before User because User references Group
 		&models.User{},
 		&models.UserProfile{},
 		&models.UserAddress{},
-		&models.Group{},
 		&models.Device{},
 		&models.DeviceOwner{},
 		&models.DeviceLog{},

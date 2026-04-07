@@ -23,6 +23,8 @@ RUN apk --no-cache add ca-certificates tzdata
 
 # Copy the compiled binary from the builder stage
 COPY --from=builder /app/scarrow-api .
+# Copy .env file
+COPY .env .
 
 # Expose the API port
 EXPOSE 38192

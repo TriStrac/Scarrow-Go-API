@@ -18,10 +18,7 @@ var DB *gorm.DB
 // InitDB initializes the database connection using environment variables
 func InitDB() {
 	// Load .env file
-	err := godotenv.Load()
-	if err != nil {
-		log.Println("No .env file found, using system environment variables")
-	}
+	_ = godotenv.Load() // Ignore error if .env is missing in Docker environment
 
 	dbUser := os.Getenv("DB_USER")
 	dbPassword := os.Getenv("DB_PASSWORD")

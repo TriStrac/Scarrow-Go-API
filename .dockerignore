@@ -1,0 +1,9 @@
+.git
+.env
+.idea
+.vscode
+node_modules
+dist
+main.exe
+scarrow-api.exe
+*.md

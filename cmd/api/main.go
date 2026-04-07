@@ -76,15 +76,21 @@ func main() {
 	// Swagger Route
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	// Get Port from env
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "38192"
+	}
+
 	// Configure the HTTP server
 	srv := &http.Server{
-		Addr:    ":8080",
+		Addr:    ":" + port,
 		Handler: router,
 	}
 
 	// Run server in a goroutine so it doesn't block
 	go func() {
-		log.Println("Server is starting on port 8080...")
+		log.Printf("Server is starting on port %s...\n", port)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("Listen error: %s\n", err)
 		}

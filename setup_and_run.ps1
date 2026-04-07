@@ -18,7 +18,8 @@ if (-not (Test-Path ".env")) {
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=
+DB_PASSWORD=root
+MYSQL_ALLOW_EMPTY_PASSWORD=yes
 DB_NAME=scarrow_db
 PORT=8080
 GIN_MODE=debug

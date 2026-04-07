@@ -40,14 +40,6 @@ type CreateDeviceLogReq struct {
 	Payload string `json:"payload" binding:"required"`
 }
 
-// CreateDevice godoc
-// @Summary CreateDevice
-// @Description CreateDevice endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/createdevice [post]
 func (c *DeviceController) CreateDevice(ctx *gin.Context) {
 	var req CreateDeviceReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -70,14 +62,6 @@ func (c *DeviceController) CreateDevice(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Device created successfully", "device": device})
 }
 
-// GetAllDevices godoc
-// @Summary GetAllDevices
-// @Description GetAllDevices endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/getalldevices [post]
 func (c *DeviceController) GetAllDevices(ctx *gin.Context) {
 	devices, err := c.deviceService.GetAllDevices()
 	if err != nil {
@@ -87,14 +71,6 @@ func (c *DeviceController) GetAllDevices(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"devices": devices})
 }
 
-// GetDeviceByID godoc
-// @Summary GetDeviceByID
-// @Description GetDeviceByID endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/getdevicebyid [post]
 func (c *DeviceController) GetDeviceByID(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	device, err := c.deviceService.GetDeviceByID(deviceID)
@@ -105,14 +81,6 @@ func (c *DeviceController) GetDeviceByID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"device": device})
 }
 
-// UpdateDevice godoc
-// @Summary UpdateDevice
-// @Description UpdateDevice endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/updatedevice [post]
 func (c *DeviceController) UpdateDevice(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	callerID, exists := ctx.Get("userID")
@@ -147,14 +115,6 @@ func (c *DeviceController) UpdateDevice(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Device updated successfully"})
 }
 
-// SoftDeleteDevice godoc
-// @Summary SoftDeleteDevice
-// @Description SoftDeleteDevice endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/softdeletedevice [post]
 func (c *DeviceController) SoftDeleteDevice(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	callerID, exists := ctx.Get("userID")
@@ -183,14 +143,6 @@ func (c *DeviceController) SoftDeleteDevice(ctx *gin.Context) {
 }
 
 // Ownership Endpoints
-// AddOwner godoc
-// @Summary AddOwner
-// @Description AddOwner endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/addowner [post]
 func (c *DeviceController) AddOwner(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	callerID, exists := ctx.Get("userID")
@@ -224,14 +176,6 @@ func (c *DeviceController) AddOwner(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Owner added successfully"})
 }
 
-// RemoveOwner godoc
-// @Summary RemoveOwner
-// @Description RemoveOwner endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/removeowner [post]
 func (c *DeviceController) RemoveOwner(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	callerID, exists := ctx.Get("userID")
@@ -265,14 +209,6 @@ func (c *DeviceController) RemoveOwner(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Owner removed successfully"})
 }
 
-// GetOwners godoc
-// @Summary GetOwners
-// @Description GetOwners endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/getowners [post]
 func (c *DeviceController) GetOwners(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	owners, err := c.deviceService.GetOwnersByDeviceID(deviceID)
@@ -284,14 +220,6 @@ func (c *DeviceController) GetOwners(ctx *gin.Context) {
 }
 
 // Device Logging Endpoints
-// CreateLog godoc
-// @Summary CreateLog
-// @Description CreateLog endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/createlog [post]
 func (c *DeviceController) CreateLog(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	// Maybe we should check ownership here too?
@@ -328,14 +256,6 @@ func (c *DeviceController) CreateLog(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{"message": "Device log created successfully"})
 }
 
-// GetLogs godoc
-// @Summary GetLogs
-// @Description GetLogs endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/getlogs [post]
 func (c *DeviceController) GetLogs(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
 	logs, err := c.deviceService.GetLogsByDeviceID(deviceID)
@@ -346,14 +266,6 @@ func (c *DeviceController) GetLogs(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"logs": logs})
 }
 
-// GetMyDevices godoc
-// @Summary GetMyDevices
-// @Description GetMyDevices endpoint
-// @Tags device
-// @Accept json
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router /device/getmydevices [post]
 func (c *DeviceController) GetMyDevices(ctx *gin.Context) {
 	callerID, exists := ctx.Get("userID")
 	if !exists {

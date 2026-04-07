@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	_ "github.com/TriStrac/Scarrow-Go-API/docs"
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/controllers"
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/middlewares"
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/routes"
@@ -18,16 +17,8 @@ import (
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title Scarrow API
-// @version 1.0
-// @description Backend API for Scarrow
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
 func main() {
 	// Initialize Database
 	config.InitDB()
@@ -72,9 +63,6 @@ func main() {
 	routes.SetupGroupRoutes(apiGroup, groupController)
 	routes.RegisterDeviceRoutes(apiGroup, deviceController)
 	routes.RegisterActivityLogRoutes(apiGroup, activityLogController)
-
-	// Swagger Route
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// Get Port from env
 	port := os.Getenv("PORT")

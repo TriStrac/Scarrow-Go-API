@@ -3,14 +3,15 @@ package routes
 import (
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/controllers"
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/middlewares"
+	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
-func SetupGroupRoutes(router *gin.RouterGroup, groupController *controllers.GroupController) {
+func SetupGroupRoutes(router *gin.RouterGroup, groupController *controllers.GroupController, userRepo repository.UserRepository) {
 	groupRoutes := router.Group("/groups")
 
-	// All group routes are protected and require JWT
-	groupRoutes.Use(middlewares.AuthMiddleware())
+	// All group routes are protected and require JWT + Verified Account
+	groupRoutes.Use(middlewares.AuthMiddleware(userRepo))
 	{
 		groupRoutes.POST("/", groupController.CreateGroup)
 		groupRoutes.GET("/", groupController.GetAllGroups)
@@ -21,5 +22,7 @@ func SetupGroupRoutes(router *gin.RouterGroup, groupController *controllers.Grou
 		groupRoutes.POST("/member", groupController.AddMember)
 		groupRoutes.DELETE("/member", groupController.RemoveMember)
 		groupRoutes.GET("/:groupId/members", groupController.GetGroupMembers)
+		groupRoutes.POST("/:groupId/invite", groupController.CreateInvitation)
+		groupRoutes.POST("/join", groupController.JoinGroupByCode)
 	}
 }

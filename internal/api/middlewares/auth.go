@@ -6,12 +6,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// AuthMiddleware validates the JWT token in the Authorization header
-func AuthMiddleware() gin.HandlerFunc {
+// AuthMiddleware validates the JWT token in the Authorization header and checks user verification
+func AuthMiddleware(userRepo repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -55,6 +56,20 @@ func AuthMiddleware() gin.HandlerFunc {
 		userID, ok := claims["user_id"].(string)
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "User ID not found in token"})
+			c.Abort()
+			return
+		}
+
+		// Production-level Security Check: Ensure user exists and is verified
+		user, err := userRepo.FindByID(userID)
+		if err != nil || user == nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User no longer exists"})
+			c.Abort()
+			return
+		}
+
+		if !user.IsVerified {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Account not verified. Please verify your phone number."})
 			c.Abort()
 			return
 		}

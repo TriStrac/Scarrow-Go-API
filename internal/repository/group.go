@@ -16,6 +16,7 @@ type GroupRepository interface {
 	SoftDelete(id string) error
 	AddMember(groupID, userID string) error
 	RemoveMember(groupID, userID string) error
+	ClearGroupMembers(groupID string) error
 	FindMembersByGroupID(groupID string) ([]models.User, error)
 	GroupNameExists(name string) (bool, error)
 	IsMember(groupID, userID string) (bool, error)
@@ -76,6 +77,13 @@ func (r *groupRepository) AddMember(groupID, userID string) error {
 func (r *groupRepository) RemoveMember(groupID, userID string) error {
 	// Directly nullify the user's group_id
 	return r.db.Model(&models.User{}).Where("id = ? AND group_id = ?", userID, groupID).Updates(map[string]interface{}{
+		"group_id":         nil,
+		"is_user_in_group": false,
+	}).Error
+}
+
+func (r *groupRepository) ClearGroupMembers(groupID string) error {
+	return r.db.Model(&models.User{}).Where("group_id = ?", groupID).Updates(map[string]interface{}{
 		"group_id":         nil,
 		"is_user_in_group": false,
 	}).Error

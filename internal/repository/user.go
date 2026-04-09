@@ -31,7 +31,7 @@ func (r *userRepository) CreateUser(user *models.User) error {
 
 func (r *userRepository) FindByUsername(username string) (*models.User, error) {
 	var user models.User
-	err := r.db.Where("username = ?", username).First(&user).Error
+	err := r.db.Preload("Profile").Where("username = ?", username).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil // Return nil, nil if not found to handle it in service

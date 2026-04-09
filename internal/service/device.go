@@ -9,7 +9,7 @@ import (
 )
 
 type DeviceService interface {
-	CreateDevice(name string, userID string, ownerType string) (*models.Device, error)
+	CreateDevice(name string, userID string, ownerType string, deviceType models.DeviceType, parentID *string) (*models.Device, error)
 	GetAllDevices() ([]models.Device, error)
 	GetDeviceByID(id string) (*models.Device, error)
 	UpdateDevice(id string, name string, status string) error
@@ -23,7 +23,7 @@ type DeviceService interface {
 	IsOwner(deviceID, userID string) (bool, error)
 
 	// Logging
-	CreateLog(deviceID, logType, payload string) error
+	CreateLog(deviceID, logType, payload, pestType string, freq float64, duration int) error
 	GetLogsByDeviceID(deviceID string) ([]models.DeviceLog, error)
 }
 
@@ -39,7 +39,7 @@ func NewDeviceService(repo repository.DeviceRepository, userRepo repository.User
 	}
 }
 
-func (s *deviceService) CreateDevice(name string, userID string, ownerType string) (*models.Device, error) {
+func (s *deviceService) CreateDevice(name string, userID string, ownerType string, deviceType models.DeviceType, parentID *string) (*models.Device, error) {
 	// Determine the actual owner ID based on ownerType
 	actualOwnerID := userID
 
@@ -58,9 +58,11 @@ func (s *deviceService) CreateDevice(name string, userID string, ownerType strin
 	}
 
 	device := &models.Device{
-		ID:     uuid.New().String(),
-		Name:   name,
-		Status: "OFFLINE",
+		ID:       uuid.New().String(),
+		Name:     name,
+		Type:     deviceType,
+		ParentID: parentID,
+		Status:   "OFFLINE",
 	}
 
 	err := s.repo.CreateDevice(device)
@@ -119,6 +121,8 @@ func (s *deviceService) UpdateDevice(id string, name string, status string) erro
 }
 
 func (s *deviceService) SoftDelete(id string) error {
+	// Unpair nodes if this is a central device
+	_ = s.repo.UnpairNodesByParent(id)
 	return s.repo.SoftDelete(id)
 }
 
@@ -167,11 +171,15 @@ func (s *deviceService) IsOwner(deviceID, userID string) (bool, error) {
 	return s.repo.IsOwner(deviceID, ownerIDs)
 }
 
-func (s *deviceService) CreateLog(deviceID, logType, payload string) error {
+func (s *deviceService) CreateLog(deviceID, logType, payload, pestType string, freq float64, duration int) error {
 	log := &models.DeviceLog{
-		DeviceID: deviceID,
-		LogType:  logType,
-		Payload:  payload,
+		ID:              uuid.New().String(),
+		DeviceID:        deviceID,
+		LogType:         logType,
+		Payload:         payload,
+		PestType:        pestType,
+		FrequencyHz:     freq,
+		DurationSeconds: duration,
 	}
 	return s.repo.CreateLog(log)
 }

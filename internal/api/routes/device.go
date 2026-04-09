@@ -3,27 +3,28 @@ package routes
 import (
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/controllers"
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/middlewares"
+	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterDeviceRoutes(r *gin.RouterGroup, controller *controllers.DeviceController) {
-	deviceGroup := r.Group("/device")
-	deviceGroup.Use(middlewares.AuthMiddleware())
+func RegisterDeviceRoutes(router *gin.RouterGroup, deviceController *controllers.DeviceController, userRepo repository.UserRepository) {
+	deviceRoutes := router.Group("/device")
+	deviceRoutes.Use(middlewares.AuthMiddleware(userRepo))
 	{
-		deviceGroup.POST("/", controller.CreateDevice)
-		deviceGroup.GET("/", controller.GetAllDevices)
-		deviceGroup.GET("/my", controller.GetMyDevices)
-		deviceGroup.GET("/:deviceId", controller.GetDeviceByID)
-		deviceGroup.PATCH("/:deviceId", controller.UpdateDevice)
-		deviceGroup.DELETE("/:deviceId", controller.SoftDeleteDevice)
+		deviceRoutes.POST("/", deviceController.CreateDevice)
+		deviceRoutes.GET("/", deviceController.GetAllDevices)
+		deviceRoutes.GET("/my", deviceController.GetMyDevices)
+		deviceRoutes.GET("/:deviceId", deviceController.GetDeviceByID)
+		deviceRoutes.PATCH("/:deviceId", deviceController.UpdateDevice)
+		deviceRoutes.DELETE("/:deviceId", deviceController.SoftDeleteDevice)
 
 		// Ownership
-		deviceGroup.POST("/:deviceId/owner", controller.AddOwner)
-		deviceGroup.DELETE("/:deviceId/owner", controller.RemoveOwner)
-		deviceGroup.GET("/:deviceId/owners", controller.GetOwners)
+		deviceRoutes.POST("/:deviceId/owner", deviceController.AddOwner)
+		deviceRoutes.DELETE("/:deviceId/owner", deviceController.RemoveOwner)
+		deviceRoutes.GET("/:deviceId/owners", deviceController.GetOwners)
 
 		// Logs
-		deviceGroup.POST("/:deviceId/logs", controller.CreateLog)
-		deviceGroup.GET("/:deviceId/logs", controller.GetLogs)
+		deviceRoutes.POST("/:deviceId/logs", deviceController.CreateLog)
+		deviceRoutes.GET("/:deviceId/logs", deviceController.GetLogs)
 	}
 }

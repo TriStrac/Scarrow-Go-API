@@ -1,7 +1,10 @@
 package service
 
 import (
+	"crypto/rand"
 	"errors"
+	"math/big"
+	"time"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
@@ -18,19 +21,34 @@ type GroupService interface {
 	AddMemberByUsername(groupID, username string) error
 	RemoveMember(groupID, userID string) error
 	GetGroupMembers(groupID string) ([]models.User, error)
+
+	// Invitations
+	CreateInvitation(groupID, creatorID string) (*models.GroupInvitation, error)
+	JoinGroupByCode(code, userID string) error
 }
 
 type groupService struct {
-	groupRepo repository.GroupRepository
-	userRepo  repository.UserRepository
+	groupRepo      repository.GroupRepository
+	userRepo       repository.UserRepository
+	deviceRepo     repository.DeviceRepository
+	notification   NotificationService
+	invitationRepo repository.GroupInvitationRepository
 }
 
-// NewGroupService requires both the group repo and the user repo
-// because we need to look up users by username when adding members.
-func NewGroupService(groupRepo repository.GroupRepository, userRepo repository.UserRepository) GroupService {
+// NewGroupService requires dependencies for cascading logic and notifications
+func NewGroupService(
+	groupRepo repository.GroupRepository,
+	userRepo repository.UserRepository,
+	deviceRepo repository.DeviceRepository,
+	notification NotificationService,
+	invitationRepo repository.GroupInvitationRepository,
+) GroupService {
 	return &groupService{
-		groupRepo: groupRepo,
-		userRepo:  userRepo,
+		groupRepo:      groupRepo,
+		userRepo:       userRepo,
+		deviceRepo:     deviceRepo,
+		notification:   notification,
+		invitationRepo: invitationRepo,
 	}
 }
 
@@ -99,6 +117,29 @@ func (s *groupService) UpdateGroup(id string, name string) error {
 }
 
 func (s *groupService) SoftDeleteGroup(id string) error {
+	group, err := s.groupRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	if group == nil {
+		return errors.New("group not found")
+	}
+
+	// 1. Get all members before clearing them to send notifications
+	members, err := s.groupRepo.FindMembersByGroupID(id)
+	if err == nil {
+		for _, member := range members {
+			_ = s.notification.CreateNotification(member.ID, "Group Disbanded", "The group/company '"+group.Name+"' has been disbanded.")
+		}
+	}
+
+	// 2. Clear members from group
+	_ = s.groupRepo.ClearGroupMembers(id)
+
+	// 3. Unpair all devices owned by this group
+	_ = s.deviceRepo.RemoveAllOwnersByOwner(id, "GROUP")
+
+	// 4. Soft delete the group
 	return s.groupRepo.SoftDelete(id)
 }
 
@@ -137,4 +178,71 @@ func (s *groupService) RemoveMember(groupID, userID string) error {
 
 func (s *groupService) GetGroupMembers(groupID string) ([]models.User, error) {
 	return s.groupRepo.FindMembersByGroupID(groupID)
+}
+
+func (s *groupService) CreateInvitation(groupID, creatorID string) (*models.GroupInvitation, error) {
+	// Generate 8-character code
+	code, err := s.generateRandomAlphanumeric(8)
+	if err != nil {
+		return nil, err
+	}
+
+	invitation := &models.GroupInvitation{
+		Code:      code,
+		GroupID:   groupID,
+		CreatedBy: creatorID,
+		ExpiresAt: time.Now().Add(48 * time.Hour), // 48 hours expiry
+	}
+
+	err = s.invitationRepo.Create(invitation)
+	if err != nil {
+		return nil, err
+	}
+
+	return invitation, nil
+}
+
+func (s *groupService) JoinGroupByCode(code, userID string) error {
+	invitation, err := s.invitationRepo.FindByCode(code)
+	if err != nil {
+		return err
+	}
+	if invitation == nil {
+		return errors.New("invalid or expired invitation code")
+	}
+
+	// 1. Get Group to check ownership
+	group, err := s.groupRepo.FindByID(invitation.GroupID)
+	if err != nil || group == nil {
+		return errors.New("group no longer exists")
+	}
+
+	if group.OwnerID == userID {
+		return errors.New("you are already the owner of this group")
+	}
+
+	// 2. Check if user is already in a group
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return err
+	}
+	if user.GroupID != nil && *user.GroupID != "" {
+		return errors.New("user already belongs to a group")
+	}
+
+	// 3. Join group
+	return s.groupRepo.AddMember(invitation.GroupID, userID)
+}
+
+func (s *groupService) generateRandomAlphanumeric(length int) (string, error) {
+	const charset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // Removed confusing chars like 0, O, 1, I
+	result := make([]byte, length)
+	for i := range result {
+		num, err := rand.Int(rand.Reader, big.NewInt(int64(len(charset))))
+		if err != nil {
+			return "", err
+		}
+		result[i] = charset[num.Int64()]
+	}
+	return string(result), nil
 }

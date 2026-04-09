@@ -33,6 +33,10 @@ type RemoveMemberReq struct {
 	UserID  string `json:"user_id" binding:"required"`
 }
 
+type JoinGroupByCodeReq struct {
+	Code string `json:"code" binding:"required"`
+}
+
 func (c *GroupController) CreateGroup(ctx *gin.Context) {
 	ownerID, exists := ctx.Get("userID")
 	if !exists {
@@ -228,4 +232,54 @@ func (c *GroupController) GetGroupMembers(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"members": members})
+}
+
+func (c *GroupController) CreateInvitation(ctx *gin.Context) {
+	groupID := ctx.Param("groupId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	group, err := c.groupService.GetGroupByID(groupID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "Group not found"})
+		return
+	}
+
+	if group.OwnerID != callerID.(string) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Only group owner can create invitations"})
+		return
+	}
+
+	invitation, err := c.groupService.CreateInvitation(groupID, callerID.(string))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{"invitation": invitation})
+}
+
+func (c *GroupController) JoinGroupByCode(ctx *gin.Context) {
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var req JoinGroupByCodeReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := c.groupService.JoinGroupByCode(req.Code, callerID.(string))
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Joined group successfully"})
 }

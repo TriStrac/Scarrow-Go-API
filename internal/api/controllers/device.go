@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 
+	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
 )
@@ -16,8 +17,10 @@ func NewDeviceController(deviceService service.DeviceService) *DeviceController 
 }
 
 type CreateDeviceReq struct {
-	Name      string `json:"name" binding:"required"`
-	OwnerType string `json:"owner_type" binding:"required,oneof=USER GROUP"`
+	Name       string            `json:"name" binding:"required"`
+	OwnerType  string            `json:"owner_type" binding:"required,oneof=USER GROUP"`
+	DeviceType models.DeviceType `json:"device_type" binding:"required,oneof=CENTRAL NODE"`
+	ParentID   *string           `json:"parent_id"`
 }
 
 type UpdateDeviceReq struct {
@@ -36,8 +39,11 @@ type RemoveOwnerReq struct {
 }
 
 type CreateDeviceLogReq struct {
-	LogType string `json:"log_type" binding:"required"`
-	Payload string `json:"payload" binding:"required"`
+	LogType         string  `json:"log_type" binding:"required"`
+	Payload         string  `json:"payload" binding:"required"`
+	PestType        string  `json:"pest_type"`
+	FrequencyHz     float64 `json:"frequency_hz"`
+	DurationSeconds int     `json:"duration_seconds"`
 }
 
 func (c *DeviceController) CreateDevice(ctx *gin.Context) {
@@ -53,7 +59,7 @@ func (c *DeviceController) CreateDevice(ctx *gin.Context) {
 		return
 	}
 
-	device, err := c.deviceService.CreateDevice(req.Name, callerID.(string), req.OwnerType)
+	device, err := c.deviceService.CreateDevice(req.Name, callerID.(string), req.OwnerType, req.DeviceType, req.ParentID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -247,7 +253,7 @@ func (c *DeviceController) CreateLog(ctx *gin.Context) {
 		return
 	}
 
-	err = c.deviceService.CreateLog(deviceID, req.LogType, req.Payload)
+	err = c.deviceService.CreateLog(deviceID, req.LogType, req.Payload, req.PestType, req.FrequencyHz, req.DurationSeconds)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

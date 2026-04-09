@@ -62,6 +62,11 @@ func InitDB() {
 		&models.DeviceOwner{},
 		&models.DeviceLog{},
 		&models.UserActivityLog{},
+		&models.OTPCode{},
+		&models.Notification{},
+		&models.GroupInvitation{},
+		&models.MessageThread{},
+		&models.Message{},
 	)
 	if err != nil {
 		log.Fatalf("Failed to perform auto migration: %v", err)

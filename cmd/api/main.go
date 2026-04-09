@@ -23,25 +23,35 @@ func main() {
 	// Initialize Database
 	config.InitDB()
 
-	// Dependency Injection for User Domain
+	// Core Repositories
 	userRepo := repository.NewUserRepository(config.DB)
-	userService := service.NewUserService(userRepo)
-	userController := controllers.NewUserController(userService)
-
-	// Dependency Injection for Group Domain
-	groupRepo := repository.NewGroupRepository(config.DB)
-	groupService := service.NewGroupService(groupRepo, userRepo)
-	groupController := controllers.NewGroupController(groupService)
-
-	// Dependency Injection for ActivityLog Domain
-	activityLogRepo := repository.NewActivityLogRepository(config.DB)
-	activityLogService := service.NewActivityLogService(activityLogRepo)
-	activityLogController := controllers.NewActivityLogController(activityLogService)
-
-	// Dependency Injection for Device Domain
 	deviceRepo := repository.NewDeviceRepository(config.DB)
+	groupRepo := repository.NewGroupRepository(config.DB)
+	otpRepo := repository.NewOTPRepository(config.DB)
+	notificationRepo := repository.NewNotificationRepository(config.DB)
+	activityLogRepo := repository.NewActivityLogRepository(config.DB)
+	messageRepo := repository.NewMessageRepository(config.DB)
+	invitationRepo := repository.NewGroupInvitationRepository(config.DB)
+
+	// Utils
+	smsService := utils.NewMockSmsService()
+
+	// Services
+	otpService := service.NewOTPService(otpRepo, smsService)
+	notificationService := service.NewNotificationService(notificationRepo)
+	userService := service.NewUserService(userRepo, deviceRepo, messageRepo)
+	groupService := service.NewGroupService(groupRepo, userRepo, deviceRepo, notificationService, invitationRepo)
 	deviceService := service.NewDeviceService(deviceRepo, userRepo)
+	activityLogService := service.NewActivityLogService(activityLogRepo)
+	messageService := service.NewMessageService(messageRepo, userRepo)
+
+	// Controllers
+	userController := controllers.NewUserController(userService, otpService)
+	groupController := controllers.NewGroupController(groupService)
 	deviceController := controllers.NewDeviceController(deviceService)
+	activityLogController := controllers.NewActivityLogController(activityLogService)
+	notificationController := controllers.NewNotificationController(notificationService)
+	messageController := controllers.NewMessageController(messageService)
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -51,6 +61,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
 			"message": "Scarrow-Go-API is running",
+			"version": "1.2",
 		})
 	})
 
@@ -59,10 +70,12 @@ func main() {
 	// Apply ActivityLogMiddleware to all mutating operations in /api
 	apiGroup.Use(middlewares.ActivityLogMiddleware(activityLogService))
 
-	routes.SetupUserRoutes(apiGroup, userController)
-	routes.SetupGroupRoutes(apiGroup, groupController)
-	routes.RegisterDeviceRoutes(apiGroup, deviceController)
+	routes.SetupUserRoutes(apiGroup, userController, userRepo)
+	routes.SetupGroupRoutes(apiGroup, groupController, userRepo)
+	routes.RegisterDeviceRoutes(apiGroup, deviceController, userRepo)
 	routes.RegisterActivityLogRoutes(apiGroup, activityLogController)
+	routes.RegisterNotificationRoutes(apiGroup, notificationController, userRepo)
+	routes.RegisterMessageRoutes(apiGroup, messageController, userRepo)
 
 	// Get Port from env
 	port := os.Getenv("PORT")

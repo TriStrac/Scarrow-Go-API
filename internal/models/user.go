@@ -7,17 +7,19 @@ import (
 )
 
 type User struct {
-	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
-	Username  string         `gorm:"type:varchar(100);unique;index;not null" json:"username"`
-	Password  string         `gorm:"type:varchar(255);not null" json:"-"`
-	GroupID   *string        `gorm:"type:varchar(36);index" json:"group_id"`
-	Group     *Group         `gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
-	IsInGroup bool           `gorm:"default:false" json:"is_user_in_group"`
-	IsHead    bool           `gorm:"default:false" json:"is_user_head"`
-	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                 string         `gorm:"type:varchar(36);primaryKey" json:"id"`
+	Username           string         `gorm:"type:varchar(100);unique;index;not null" json:"username"`
+	Password           string         `gorm:"type:varchar(255);not null" json:"-"`
+	GroupID            *string        `gorm:"type:varchar(36);index" json:"group_id"`
+	Group              *Group         `gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	IsInGroup          bool           `gorm:"default:false" json:"is_user_in_group"`
+	IsHead             bool           `gorm:"default:false" json:"is_user_head"`
+	IsVerified         bool           `gorm:"default:false" json:"is_verified"`
+	SubscriptionStatus string         `gorm:"type:varchar(50);default:'FREE'" json:"subscription_status"`
+	IsDeleted          bool           `gorm:"default:false" json:"is_deleted"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
 
 	Profile *UserProfile `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"profile"`
 	Address *UserAddress `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"address"`

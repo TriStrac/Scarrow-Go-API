@@ -7,44 +7,61 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// ActivityLogMiddleware logs user actions based on mutating HTTP methods
+var routeActions = map[string]string{
+	"POST /api/users/":                    "Registered new account",
+	"POST /api/users/verify-registration": "Verified account",
+	"POST /api/users/login":               "Logged in",
+	"POST /api/users/changePassword":      "Changed password",
+	"PATCH /api/users/:userId":            "Updated profile",
+	"POST /api/groups/":                   "Created a group",
+	"POST /api/groups/join":               "Joined a group via code",
+	"POST /api/groups/member":             "Added a member to group",
+	"DELETE /api/groups/member":           "Removed a member from group",
+	"POST /api/device/":                   "Added a new device",
+	"POST /api/messages/":                 "Sent a message",
+}
+
+// ActivityLogMiddleware logs user actions with human-readable descriptions
 func ActivityLogMiddleware(activityLogService service.ActivityLogService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Proceed with the request
 		c.Next()
 
-		// Only log for successful mutating operations (POST, PATCH, DELETE, PUT)
 		if c.Writer.Status() >= 200 && c.Writer.Status() < 300 {
 			method := c.Request.Method
-			if method == "POST" || method == "PATCH" || method == "DELETE" || method == "PUT" {
-				userID, exists := c.Get("userID")
-				if !exists {
-					// Some operations like login/register might not have userID in context yet
-					// but we might want to log them too if we can extract ID later or if it's public.
-					// For now, let's just log if userID exists.
-					return
-				}
+			path := c.FullPath()
 
-				path := c.FullPath()
-				action := fmt.Sprintf("%s %s", method, path)
-				module := extractModule(path)
-
-				// Log in background or directly
-				// s.LogActivity(userID.(string), action, module)
-				_ = activityLogService.LogActivity(userID.(string), action, module)
+			if method == "GET" {
+				return
 			}
+
+			userID, exists := c.Get("userID")
+			if !exists {
+				return
+			}
+
+			actionKey := fmt.Sprintf("%s %s", method, path)
+			actionDesc, ok := routeActions[actionKey]
+			if !ok {
+				actionDesc = actionKey // Fallback to raw path if not mapped
+			}
+
+			module := extractModule(path)
+			_ = activityLogService.LogActivity(userID.(string), actionDesc, module)
 		}
 	}
 }
 
 func extractModule(path string) string {
-	// Simple module extraction based on path (e.g., /api/users/foo -> users)
-	// You can make this more robust as needed.
-	if len(path) < 5 {
-		return "unknown"
+	if len(path) < 10 {
+		return "general"
 	}
-	// skip "/api/"
-	parts := fmt.Sprintf("%v", path)
-	// Just a simple placeholder for now
+	// /api/users/... -> users
+	// /api/groups/... -> groups
+	parts := path[5:]
+	for i, char := range parts {
+		if char == '/' {
+			return parts[:i]
+		}
+	}
 	return parts
 }

@@ -17,10 +17,12 @@ type DeviceRepository interface {
 	// Ownership
 	AddOwner(deviceOwner *models.DeviceOwner) error
 	RemoveOwner(deviceID, ownerID, ownerType string) error
+	RemoveAllOwnersByOwner(ownerID, ownerType string) error
 	GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwner, error)
 	GetDevicesByOwner(ownerID, ownerType string) ([]models.Device, error)
 	GetDevicesByOwnerIDs(ownerIDs []string) ([]models.Device, error)
 	IsOwner(deviceID string, ownerIDs []string) (bool, error)
+	UnpairNodesByParent(parentID string) error
 
 	// Logging
 	CreateLog(log *models.DeviceLog) error
@@ -73,6 +75,10 @@ func (r *deviceRepository) RemoveOwner(deviceID, ownerID, ownerType string) erro
 	return r.db.Where("device_id = ? AND owner_id = ? AND owner_type = ?", deviceID, ownerID, ownerType).Delete(&models.DeviceOwner{}).Error
 }
 
+func (r *deviceRepository) RemoveAllOwnersByOwner(ownerID, ownerType string) error {
+	return r.db.Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).Delete(&models.DeviceOwner{}).Error
+}
+
 func (r *deviceRepository) GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwner, error) {
 	var owners []models.DeviceOwner
 	err := r.db.Where("device_id = ?", deviceID).Find(&owners).Error
@@ -107,6 +113,10 @@ func (r *deviceRepository) IsOwner(deviceID string, ownerIDs []string) (bool, er
 	var count int64
 	err := r.db.Model(&models.DeviceOwner{}).Where("device_id = ? AND owner_id IN ?", deviceID, ownerIDs).Count(&count).Error
 	return count > 0, err
+}
+
+func (r *deviceRepository) UnpairNodesByParent(parentID string) error {
+	return r.db.Model(&models.Device{}).Where("parent_id = ?", parentID).Update("parent_id", nil).Error
 }
 
 func (r *deviceRepository) CreateLog(log *models.DeviceLog) error {

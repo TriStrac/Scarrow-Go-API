@@ -6,14 +6,26 @@ import (
 	"gorm.io/gorm"
 )
 
+type DeviceType string
+
+const (
+	DeviceTypeCentral DeviceType = "CENTRAL"
+	DeviceTypeNode    DeviceType = "NODE"
+)
+
 type Device struct {
 	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
 	Name      string         `gorm:"type:varchar(100);not null" json:"name"`
+	Type      DeviceType     `gorm:"type:varchar(20);not null;default:'CENTRAL'" json:"device_type"`
+	ParentID  *string        `gorm:"type:varchar(36);index" json:"parent_id"`
 	Status    string         `gorm:"type:varchar(50);default:'OFFLINE'" json:"status"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+
+	Parent *Device  `gorm:"foreignKey:ParentID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	Nodes  []Device `gorm:"foreignKey:ParentID;references:ID" json:"nodes,omitempty"`
 }
 
 type DeviceOwner struct {
@@ -23,9 +35,12 @@ type DeviceOwner struct {
 }
 
 type DeviceLog struct {
-	ID        uint      `gorm:"primaryKey" json:"id"`
-	DeviceID  string    `gorm:"type:varchar(36);not null;index" json:"device_id"`
-	LogType   string    `gorm:"type:varchar(50);not null" json:"log_type"`
-	Payload   string    `gorm:"type:text" json:"payload"`
-	CreatedAt time.Time `json:"created_at"`
+	ID              string    `gorm:"type:varchar(36);primaryKey" json:"id"`
+	DeviceID        string    `gorm:"type:varchar(36);not null;index" json:"device_id"`
+	LogType         string    `gorm:"type:varchar(50);not null" json:"log_type"`
+	PestType        string    `gorm:"type:varchar(50)" json:"pest_type"`
+	FrequencyHz     float64   `json:"frequency_hz"`
+	DurationSeconds int       `json:"duration_seconds"`
+	Payload         string    `gorm:"type:text" json:"payload"`
+	CreatedAt       time.Time `json:"created_at"`
 }

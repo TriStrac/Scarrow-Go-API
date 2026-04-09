@@ -33,11 +33,9 @@ Authorization: Bearer <your_jwt_token_here>
 ```json
 {
   "message": "Registration initiated. Please verify with the OTP sent to your number.",
-  "identifier": "johndoe123",
-  "otp": "123456" 
+  "identifier": "johndoe123"
 }
 ```
-*(Note: OTP is included in response for testing purposes only).*
 
 ### 2. Verify Registration (❌ Public)
 `POST /api/users/verify-registration`
@@ -65,8 +63,7 @@ Authorization: Bearer <your_jwt_token_here>
 ```json
 {
   "message": "OTP sent for login verification",
-  "identifier": "johndoe123",
-  "otp": "654321"
+  "identifier": "johndoe123"
 }
 ```
 

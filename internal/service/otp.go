@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"time"
 
@@ -61,6 +62,7 @@ func (s *otpService) GenerateAndSendOTP(identifier string, purpose models.OTPPur
 
 	// 4. Send SMS
 	message := fmt.Sprintf("Your Scarrow verification code is: %s. Valid for 5 minutes.", code)
+	log.Printf("[OTP GENERATED] Identifier: %s, Purpose: %s, Code: %s\n", identifier, purpose, code)
 	_ = s.smsService.SendSMS(identifier, message)
 
 	return code, nil

@@ -75,7 +75,7 @@ func (c *UserController) Register(ctx *gin.Context) {
 	}
 
 	// Send OTP for registration
-	otp, err := c.otpService.GenerateAndSendOTP(req.Number, models.OTPPurposeRegistration)
+	_, err = c.otpService.GenerateAndSendOTP(req.Number, models.OTPPurposeRegistration)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP: " + err.Error()})
 		return
@@ -84,7 +84,6 @@ func (c *UserController) Register(ctx *gin.Context) {
 	ctx.JSON(http.StatusCreated, gin.H{
 		"message":    "Registration initiated. Please verify with the OTP sent to your number.",
 		"identifier": req.Username,
-		"otp":        otp, // Included for testing purposes
 	})
 }
 
@@ -139,7 +138,7 @@ func (c *UserController) Login(ctx *gin.Context) {
 	}
 
 	// Send OTP for login
-	otp, err := c.otpService.GenerateAndSendOTP(user.Profile.PhoneNumber, models.OTPPurposeLogin)
+	_, err = c.otpService.GenerateAndSendOTP(user.Profile.PhoneNumber, models.OTPPurposeLogin)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP: " + err.Error()})
 		return
@@ -148,7 +147,6 @@ func (c *UserController) Login(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message":    "OTP sent for login verification",
 		"identifier": user.Username,
-		"otp":        otp, // Included for testing purposes
 	})
 }
 
@@ -195,7 +193,7 @@ func (c *UserController) ForgotPassword(ctx *gin.Context) {
 		return
 	}
 
-	otp, err := c.otpService.GenerateAndSendOTP(user.Profile.PhoneNumber, models.OTPPurposeForgotPassword)
+	_, err = c.otpService.GenerateAndSendOTP(user.Profile.PhoneNumber, models.OTPPurposeForgotPassword)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send OTP"})
 		return
@@ -203,7 +201,6 @@ func (c *UserController) ForgotPassword(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "OTP sent for password reset",
-		"otp":     otp, // Included for testing purposes
 	})
 }
 

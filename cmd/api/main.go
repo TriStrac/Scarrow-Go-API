@@ -35,7 +35,11 @@ func main() {
 	invitationRepo := repository.NewGroupInvitationRepository(config.DB)
 
 	// Utils
-	smsService := utils.NewMockSmsService()
+	smsApiKey := os.Getenv("SMS_API_KEY")
+	if smsApiKey == "" {
+		log.Println("WARNING: SMS_API_KEY is not set. SMS sending might fail.")
+	}
+	smsService := utils.NewRealSmsService(smsApiKey)
 
 	// Services
 	otpService := service.NewOTPService(otpRepo, smsService)
@@ -62,7 +66,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
 			"message": "Scarrow-Go-API is running",
-			"version": "1.2",
+			"version": "1.3",
 		})
 	})
 

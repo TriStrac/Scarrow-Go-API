@@ -73,7 +73,7 @@ func main() {
 	routes.SetupUserRoutes(apiGroup, userController, userRepo)
 	routes.SetupGroupRoutes(apiGroup, groupController, userRepo)
 	routes.RegisterDeviceRoutes(apiGroup, deviceController, userRepo)
-	routes.RegisterActivityLogRoutes(apiGroup, activityLogController)
+	routes.RegisterActivityLogRoutes(apiGroup, activityLogController, userRepo)
 	routes.RegisterNotificationRoutes(apiGroup, notificationController, userRepo)
 	routes.RegisterMessageRoutes(apiGroup, messageController, userRepo)
 

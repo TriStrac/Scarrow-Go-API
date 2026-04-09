@@ -16,6 +16,7 @@ import (
 	"github.com/TriStrac/Scarrow-Go-API/internal/config"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
+	"github.com/TriStrac/Scarrow-Go-API/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
 

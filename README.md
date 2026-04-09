@@ -1,6 +1,7 @@
 # Scarrow-Go-API - Frontend Integration Guide 🚀
 
 **Base URL:** `http://localhost:8080` (Local) / `https://api.scarrow.com` (Production)
+**Version:** 1.2
 
 ## 🔑 Global Configuration
 
@@ -32,9 +33,11 @@ Authorization: Bearer <your_jwt_token_here>
 ```json
 {
   "message": "Registration initiated. Please verify with the OTP sent to your number.",
-  "identifier": "johndoe123"
+  "identifier": "johndoe123",
+  "otp": "123456" 
 }
 ```
+*(Note: OTP is included in response for testing purposes only).*
 
 ### 2. Verify Registration (❌ Public)
 `POST /api/users/verify-registration`
@@ -62,7 +65,8 @@ Authorization: Bearer <your_jwt_token_here>
 ```json
 {
   "message": "OTP sent for login verification",
-  "identifier": "johndoe123"
+  "identifier": "johndoe123",
+  "otp": "654321"
 }
 ```
 
@@ -73,7 +77,7 @@ Authorization: Bearer <your_jwt_token_here>
 ```json
 {
   "identifier": "johndoe123",
-  "code": "123456"
+  "code": "654321"
 }
 ```
 
@@ -99,67 +103,93 @@ Authorization: Bearer <your_jwt_token_here>
 ```json
 {
   "username": "johndoe123",
-  "otp": "123456",
-  "new_password": "newsecurepassword"
+  "otp": "112233",
+  "new_password": "newsecurepassword123"
 }
 ```
 
 ### 7. Get Full Profile (🔒 Protected)
 `GET /api/users/:userId`
 
+**Returns the comprehensive user state for caching.**
+
 **Success Response (200 OK):**
 ```json
 {
-  "user": { "id": "...", "username": "...", "subscription_status": "FREE", "...": "..." },
-  "devices": [ { "id": "...", "name": "...", "device_type": "CENTRAL" } ],
-  "recent_messages": [ { "content": "Hello", "sender_id": "..." } ],
+  "user": {
+    "id": "uuid-123",
+    "username": "johndoe123",
+    "is_verified": true,
+    "subscription_status": "FREE",
+    "profile": { "first_name": "John", "last_name": "Doe", "phone_number": "0912..." },
+    "address": { "street_name": "...", "town": "..." }
+  },
+  "devices": [
+    { "id": "dev-1", "name": "Central Hub", "device_type": "CENTRAL", "status": "ONLINE" }
+  ],
+  "recent_messages": [
+    { "id": "msg-1", "content": "Hello!", "sender_id": "other-uuid", "created_at": "..." }
+  ],
   "unread_messages_count": 2
 }
 ```
 
 ---
 
-## 🏢 Groups Module (`/api/groups`)
+## 🏢 Groups / Companies Module (`/api/groups`)
 
-### 1. Create Invitation Code (🔒 Protected)
+### 1. Create a Group (🔒 Protected)
+`POST /api/groups/`
+`{ "name": "My Farm Co" }`
+
+### 2. Create Invitation Code (🔒 Protected)
 `POST /api/groups/:groupId/invite`
 
 **Success Response (201 Created):**
 ```json
 {
   "invitation": {
-    "code": "ABCDEFGH",
-    "expires_at": "..."
+    "code": "FARM1234",
+    "group_id": "group-uuid",
+    "expires_at": "2026-04-11T..."
   }
 }
 ```
 
-### 2. Join Group via Code (🔒 Protected)
+### 3. Join Group via Code (🔒 Protected)
 `POST /api/groups/join`
 
 **Request Payload:**
 ```json
-{ "code": "ABCDEFGH" }
+{ "code": "FARM1234" }
 ```
+
+### 4. Remove Member (🔒 Protected)
+`DELETE /api/groups/member`
+`{ "group_id": "...", "user_id": "..." }`
 
 ---
 
 ## 📱 Devices Module (`/api/device`)
 
-### 1. Create Hierarchical Device (🔒 Protected)
+### 1. Create Device (🔒 Protected)
 `POST /api/device/`
 
 **Request Payload:**
 ```json
 {
-  "name": "Node 1",
+  "name": "Node 01",
   "owner_type": "USER",
   "device_type": "NODE",
-  "parent_id": "central-device-uuid"
+  "parent_id": "central-hub-uuid" 
 }
 ```
+*(Use `device_type`: 'CENTRAL' or 'NODE').*
 
-### 2. Create Telemetry Log (🔒 Protected)
+### 2. Get My Devices (🔒 Protected)
+`GET /api/device/my`
+
+### 3. Create Telemetry Log (🔒 Protected)
 `POST /api/device/:deviceId/logs`
 
 **Request Payload:**
@@ -167,9 +197,9 @@ Authorization: Bearer <your_jwt_token_here>
 {
   "log_type": "TELEMETRY",
   "pest_type": "LOCUST",
-  "frequency_hz": 12500.5,
-  "duration_seconds": 15,
-  "payload": "{...}"
+  "frequency_hz": 14500.5,
+  "duration_seconds": 30,
+  "payload": "{\"raw_sensor_data\": \"...\"}"
 }
 ```
 
@@ -182,6 +212,7 @@ Authorization: Bearer <your_jwt_token_here>
 
 ### 2. Get Thread History (🔒 Protected)
 `GET /api/messages/:threadId`
+*(Returns last 50 messages, marks them as read).*
 
 ### 3. Send Message (🔒 Protected)
 `POST /api/messages/`
@@ -190,7 +221,7 @@ Authorization: Bearer <your_jwt_token_here>
 ```json
 {
   "receiver_id": "other-user-uuid",
-  "content": "Hello farmer!"
+  "content": "Alert: Unusual activity on Node 2."
 }
 ```
 
@@ -203,3 +234,12 @@ Authorization: Bearer <your_jwt_token_here>
 
 ### 2. Mark as Read (🔒 Protected)
 `PATCH /api/notifications/:notificationId/read`
+
+### 3. Mark All as Read (🔒 Protected)
+`PATCH /api/notifications/read-all`
+
+---
+
+## 📜 Activity Logs (`/api/activityLogs`)
+`GET /api/activityLogs/my`
+*(Returns human-readable logs like "Logged in", "Joined a group", etc).*

@@ -21,8 +21,6 @@ Authorization: Bearer <your_jwt_token_here>
 **Request Payload:**
 ```json
 {
-  "first_name": "John",
-  "last_name": "Doe",
   "username": "johndoe123",
   "password": "securepassword1",
   "number": "09123456789"
@@ -105,31 +103,42 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 7. Get Full Profile (🔒 Protected)
-`GET /api/users/:userId`
+### 7. Get My Session Profile (🔒 Protected)
+`GET /api/users/me`
 
-**Returns the comprehensive user state for caching.**
+**Returns lightweight session and identity state to drive UI routing.**
 
 **Success Response (200 OK):**
 ```json
 {
-  "user": {
-    "id": "uuid-123",
-    "username": "johndoe123",
-    "is_verified": true,
-    "subscription_status": "FREE",
-    "profile": { "first_name": "John", "last_name": "Doe", "phone_number": "0912..." },
-    "address": { "street_name": "...", "town": "..." }
-  },
-  "devices": [
-    { "id": "dev-1", "name": "Central Hub", "device_type": "CENTRAL", "status": "ONLINE" }
-  ],
-  "recent_messages": [
-    { "id": "msg-1", "content": "Hello!", "sender_id": "other-uuid", "created_at": "..." }
-  ],
-  "unread_messages_count": 2
+  "user_id": "uuid-123",
+  "username": "johndoe123",
+  "role": "HEAD",
+  "group_id": "group-uuid",
+  "group_name": "My Farm Co",
+  "subscription_status": "FREE",
+  "profile_complete": true
 }
 ```
+
+### 8. Get Full Profile (🔒 Protected)
+`GET /api/users/:userId`
+
+**Returns the comprehensive user state for caching.**
+
+### 9. Save Push Token (🔒 Protected)
+`POST /api/users/me/push-tokens`
+
+**Request Payload:**
+```json
+{
+  "token": "fcm_token_string",
+  "platform": "android"
+}
+```
+
+### 10. Remove Push Token (🔒 Protected)
+`DELETE /api/users/me/push-tokens/:tokenId`
 
 ---
 
@@ -139,7 +148,41 @@ Authorization: Bearer <your_jwt_token_here>
 `POST /api/groups/`
 `{ "name": "My Farm Co" }`
 
-### 2. Create Invitation Code (🔒 Protected)
+### 2. Get Group Details (🔒 Protected)
+`GET /api/groups/:groupId`
+
+**Success Response (200 OK):**
+```json
+{
+  "id": "group-uuid",
+  "name": "My Farm Co",
+  "owner_id": "owner-uuid",
+  "role": "HEAD",
+  "member_count": 5,
+  "settings": {}
+}
+```
+
+### 3. Get Group Members (🔒 Protected)
+`GET /api/groups/:groupId/members`
+
+**Success Response (200 OK):**
+```json
+[
+  {
+    "user_id": "uuid-1",
+    "display_name": "John Doe",
+    "role": "HEAD"
+  },
+  {
+    "user_id": "uuid-2",
+    "display_name": "jane_smith",
+    "role": "MEMBER"
+  }
+]
+```
+
+### 4. Create Invitation Code (🔒 Protected)
 `POST /api/groups/:groupId/invite`
 
 **Success Response (201 Created):**
@@ -153,7 +196,7 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 3. Join Group via Code (🔒 Protected)
+### 5. Join Group via Code (🔒 Protected)
 `POST /api/groups/join`
 
 **Request Payload:**
@@ -161,9 +204,17 @@ Authorization: Bearer <your_jwt_token_here>
 { "code": "FARM1234" }
 ```
 
-### 4. Remove Member (🔒 Protected)
+### 6. Remove Member (Admin only) (🔒 Protected)
 `DELETE /api/groups/member`
 `{ "group_id": "...", "user_id": "..." }`
+
+### 7. Leave Group (Members only) (🔒 Protected)
+`POST /api/groups/leave`
+
+**Request Payload:**
+```json
+{ "group_id": "..." }
+```
 
 ---
 
@@ -186,32 +237,35 @@ Authorization: Bearer <your_jwt_token_here>
 ### 2. Get My Devices (🔒 Protected)
 `GET /api/device/my`
 
-### 3. Create Telemetry Log (🔒 Protected)
-`POST /api/device/:deviceId/logs`
+### 4. Get Device Logs (History) (🔒 Protected)
+`GET /api/device/:deviceId/logs?limit=50&offset=0`
 
-**Request Payload:**
-```json
-{
-  "log_type": "TELEMETRY",
-  "pest_type": "LOCUST",
-  "frequency_hz": 14500.5,
-  "duration_seconds": 30,
-  "payload": "{\"raw_sensor_data\": \"...\"}"
-}
-```
+**Returns paginated telemetry history.**
 
 ---
 
 ## ✉️ Messages Module (`/api/messages`)
 
 ### 1. List My Threads (🔒 Protected)
-`GET /api/messages/`
+`GET /api/messages/?limit=50&offset=0`
 
-### 2. Get Thread History (🔒 Protected)
-`GET /api/messages/:threadId`
-*(Returns last 50 messages, marks them as read).*
+### 2. Get Unread Summary (🔒 Protected)
+`GET /api/messages/unread-summary`
 
-### 3. Send Message (🔒 Protected)
+**Returns the total number of unread messages across all threads for badges.**
+
+**Success Response (200 OK):**
+```json
+{
+  "unread_count": 3
+}
+```
+
+### 3. Get Thread History (🔒 Protected)
+`GET /api/messages/:threadId?limit=50&offset=0`
+*(Returns thread metadata and messages. Marks retrieved messages as read).*
+
+### 4. Send Message (🔒 Protected)
 `POST /api/messages/`
 
 **Request Payload:**
@@ -220,6 +274,97 @@ Authorization: Bearer <your_jwt_token_here>
   "receiver_id": "other-user-uuid",
   "content": "Alert: Unusual activity on Node 2."
 }
+```
+
+---
+
+## 📊 Reports Module (`/api/reports`)
+
+### 1. Get Analytics Summary (🔒 Protected)
+`GET /api/reports/summary?timeframe=last_7_days`
+
+**Returns aggregated device data and alerts for charting.**
+
+**Success Response (200 OK):**
+```json
+{
+  "overview": {
+    "total_alerts": 41,
+    "total_devices": 2
+  },
+  "pest_distribution": {
+    "BIRDS": 22,
+    "LOCUST": 14,
+    "RATS": 5
+  },
+  "daily_trends": [
+    { "count": 2, "date": "2026-04-06" },
+    { "count": 5, "date": "2026-04-07" }
+  ],
+  "timeframe": "last_7_days"
+}
+```
+
+---
+
+## 💳 Subscriptions Module (`/api/subscriptions`)
+
+### 1. Get Available Plans (❌ Public)
+`GET /api/subscriptions/plans`
+
+**Success Response (200 OK):**
+```json
+{
+  "plans": [
+    {
+      "id": "plan_monthly",
+      "name": "Premium Farmer (Monthly)",
+      "description": "Full access to analytics and unlimited devices for 30 days.",
+      "price": 499.00,
+      "duration_days": 30
+    }
+  ]
+}
+```
+
+### 2. Get My Subscription (🔒 Protected)
+`GET /api/subscriptions/my`
+
+**Success Response (200 OK):**
+```json
+{
+  "subscription": {
+    "id": "sub_123",
+    "plan_id": "plan_monthly",
+    "status": "ACTIVE",
+    "start_date": "2026-04-10T10:00:00Z",
+    "end_date": "2026-05-10T10:00:00Z"
+  }
+}
+```
+
+### 3. Create Checkout Session (🔒 Protected)
+`POST /api/subscriptions/checkout`
+
+**Request Payload:**
+```json
+{ "plan_id": "plan_monthly" }
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "checkout_url": "https://checkout.paymongo.com/...",
+  "reference_id": "pi_12345"
+}
+```
+
+### 4. Verify/Restore Payment (🔒 Protected)
+`POST /api/subscriptions/verify`
+
+**Request Payload:**
+```json
+{ "reference_id": "pi_12345" }
 ```
 
 ---

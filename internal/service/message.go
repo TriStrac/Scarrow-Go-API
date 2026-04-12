@@ -10,8 +10,8 @@ import (
 
 type MessageService interface {
 	SendMessage(senderID, receiverID, content string) (*models.Message, error)
-	GetThreads(userID string) ([]models.MessageThread, error)
-	GetThreadMessages(threadID, userID string) (*models.MessageThread, error)
+	GetThreads(userID string, limit int, offset int) ([]models.MessageThread, error)
+	GetThreadMessages(threadID, userID string, limit int, offset int) (*models.MessageThread, error)
 	GetUnreadCount(userID string) (int64, error)
 	GetRecentMessages(userID string) ([]models.Message, error)
 }
@@ -62,14 +62,14 @@ func (s *messageService) SendMessage(senderID, receiverID, content string) (*mod
 	return message, nil
 }
 
-func (s *messageService) GetThreads(userID string) ([]models.MessageThread, error) {
-	return s.repo.FindThreadsByUserID(userID)
+func (s *messageService) GetThreads(userID string, limit int, offset int) ([]models.MessageThread, error) {
+	return s.repo.FindThreadsByUserID(userID, limit, offset)
 }
 
-func (s *messageService) GetThreadMessages(threadID, userID string) (*models.MessageThread, error) {
+func (s *messageService) GetThreadMessages(threadID, userID string, limit int, offset int) (*models.MessageThread, error) {
 	// Mark messages as read first
 	_ = s.repo.MarkThreadAsRead(threadID, userID)
-	return s.repo.GetThreadWithMessages(threadID, 50) // Limit last 50
+	return s.repo.GetThreadWithMessages(threadID, limit, offset)
 }
 
 func (s *messageService) GetUnreadCount(userID string) (int64, error) {

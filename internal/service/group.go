@@ -20,11 +20,27 @@ type GroupService interface {
 	SoftDeleteGroup(id string) error
 	AddMemberByUsername(groupID, username string) error
 	RemoveMember(groupID, userID string) error
-	GetGroupMembers(groupID string) ([]models.User, error)
+	GetGroupMembers(groupID string) ([]MemberResponse, error)
 
 	// Invitations
 	CreateInvitation(groupID, creatorID string) (*models.GroupInvitation, error)
 	JoinGroupByCode(code, userID string) error
+	GetGroupDetails(groupID string, callerID string) (*GroupDetailResponse, error)
+}
+
+type MemberResponse struct {
+	UserID      string `json:"user_id"`
+	DisplayName string `json:"display_name"`
+	Role        string `json:"role"`
+}
+
+type GroupDetailResponse struct {
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	OwnerID     string      `json:"owner_id"`
+	Role        string      `json:"role"`
+	MemberCount int64       `json:"member_count"`
+	Settings    interface{} `json:"settings"` // Placeholder for future settings
 }
 
 type groupService struct {
@@ -91,6 +107,42 @@ func (s *groupService) GetGroupByID(id string) (*models.Group, error) {
 		return nil, errors.New("group not found")
 	}
 	return group, nil
+}
+
+func (s *groupService) GetGroupDetails(groupID string, callerID string) (*GroupDetailResponse, error) {
+	group, err := s.groupRepo.FindByID(groupID)
+	if err != nil {
+		return nil, err
+	}
+	if group == nil {
+		return nil, errors.New("group not found")
+	}
+
+	members, err := s.groupRepo.FindMembersByGroupID(groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	role := "GUEST" // Or NOT_MEMBER
+	if group.OwnerID == callerID {
+		role = "HEAD"
+	} else {
+		for _, member := range members {
+			if member.ID == callerID {
+				role = "MEMBER"
+				break
+			}
+		}
+	}
+
+	return &GroupDetailResponse{
+		ID:          group.ID,
+		Name:        group.Name,
+		OwnerID:     group.OwnerID,
+		Role:        role,
+		MemberCount: int64(len(members)),
+		Settings:    map[string]interface{}{}, // empty for now
+	}, nil
 }
 
 func (s *groupService) UpdateGroup(id string, name string) error {
@@ -176,8 +228,40 @@ func (s *groupService) RemoveMember(groupID, userID string) error {
 	return s.groupRepo.RemoveMember(groupID, userID)
 }
 
-func (s *groupService) GetGroupMembers(groupID string) ([]models.User, error) {
-	return s.groupRepo.FindMembersByGroupID(groupID)
+func (s *groupService) GetGroupMembers(groupID string) ([]MemberResponse, error) {
+	// 1. We also need to know the owner to label them as HEAD.
+	group, err := s.groupRepo.FindByID(groupID)
+	if err != nil || group == nil {
+		return nil, errors.New("group not found")
+	}
+
+	users, err := s.groupRepo.FindMembersByGroupID(groupID)
+	if err != nil {
+		return nil, err
+	}
+
+	responses := make([]MemberResponse, 0)
+	for _, user := range users {
+		displayName := user.Username
+		if user.Profile != nil && user.Profile.FirstName != "" {
+			displayName = user.Profile.FirstName + " " + user.Profile.LastName
+		}
+
+		role := "MEMBER"
+		if user.ID == group.OwnerID {
+			role = "HEAD"
+		} else if user.IsHead {
+			role = "HEAD" // In case you support multiple heads later
+		}
+
+		responses = append(responses, MemberResponse{
+			UserID:      user.ID,
+			DisplayName: displayName,
+			Role:        role,
+		})
+	}
+
+	return responses, nil
 }
 
 func (s *groupService) CreateInvitation(groupID, creatorID string) (*models.GroupInvitation, error) {

@@ -28,9 +28,9 @@ type User struct {
 type UserProfile struct {
 	ID          string    `gorm:"type:varchar(36);primaryKey" json:"id"`
 	UserID      string    `gorm:"type:varchar(36);not null;index" json:"user_id"`
-	FirstName   string    `gorm:"type:varchar(100);not null" json:"first_name"`
+	FirstName   string    `gorm:"type:varchar(100)" json:"first_name"`
 	MiddleName  string    `gorm:"type:varchar(100)" json:"middle_name"`
-	LastName    string    `gorm:"type:varchar(100);not null" json:"last_name"`
+	LastName    string    `gorm:"type:varchar(100)" json:"last_name"`
 	BirthDate   time.Time `gorm:"type:date" json:"birth_date"`
 	PhoneNumber string    `gorm:"type:varchar(20)" json:"phone_number"`
 }
@@ -43,4 +43,13 @@ type UserAddress struct {
 	Town       string `gorm:"type:varchar(100)" json:"town"`
 	Province   string `gorm:"type:varchar(100)" json:"province"`
 	ZipCode    string `gorm:"type:varchar(10)" json:"zip_code"`
+}
+
+type PushToken struct {
+	ID        string    `gorm:"type:varchar(36);primaryKey" json:"id"`
+	UserID    string    `gorm:"type:varchar(36);not null;index" json:"user_id"`
+	Token     string    `gorm:"type:varchar(255);not null;unique" json:"token"`
+	Platform  string    `gorm:"type:varchar(50)" json:"platform"` // e.g., 'android', 'ios', 'web'
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

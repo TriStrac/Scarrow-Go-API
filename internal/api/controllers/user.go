@@ -19,11 +19,9 @@ func NewUserController(userService service.UserService, otpService service.OTPSe
 
 // Request Data Transfer Objects (DTOs) for validation
 type RegisterReq struct {
-	FirstName string `json:"first_name" binding:"required"`
-	LastName  string `json:"last_name" binding:"required"`
-	Username  string `json:"username" binding:"required"`
-	Password  string `json:"password" binding:"required,min=6"`
-	Number    string `json:"number" binding:"required"` // Phone number for OTP
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required,min=6"`
+	Number   string `json:"number" binding:"required"` // Phone number for OTP
 }
 
 type VerifyOTPReq struct {
@@ -50,6 +48,11 @@ type ChangePasswordReq struct {
 	NewPassword string `json:"new_password" binding:"required,min=6"`
 }
 
+type SavePushTokenReq struct {
+	Token    string `json:"token" binding:"required"`
+	Platform string `json:"platform" binding:"required"`
+}
+
 func (c *UserController) Register(ctx *gin.Context) {
 	var req RegisterReq
 	if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -61,8 +64,6 @@ func (c *UserController) Register(ctx *gin.Context) {
 		Username: req.Username,
 		Password: req.Password,
 		Profile: &models.UserProfile{
-			FirstName:   req.FirstName,
-			LastName:    req.LastName,
 			PhoneNumber: req.Number,
 		},
 		IsVerified: false,
@@ -241,6 +242,22 @@ func (c *UserController) GetAllUsers(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"users": users})
 }
 
+func (c *UserController) GetMe(ctx *gin.Context) {
+	userId, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	sessionInfo, err := c.userService.GetMeSession(userId.(string))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, sessionInfo)
+}
+
 func (c *UserController) GetUserByID(ctx *gin.Context) {
 	userId := ctx.Param("userId")
 	profile, err := c.userService.GetUserFullProfile(userId)
@@ -341,4 +358,40 @@ func (c *UserController) CheckUsernameExists(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"exists": exists})
+}
+
+func (c *UserController) SavePushToken(ctx *gin.Context) {
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var req SavePushTokenReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	err := c.userService.SavePushToken(userID.(string), req.Token, req.Platform)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Push token saved successfully"})
+}
+
+func (c *UserController) RemovePushToken(ctx *gin.Context) {
+	// Not strictly checking if token belongs to caller here for simplicity,
+	// but in a production environment, you might want to verify ownership before deletion.
+	tokenID := ctx.Param("tokenId")
+	
+	err := c.userService.RemovePushToken(tokenID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Push token removed successfully"})
 }

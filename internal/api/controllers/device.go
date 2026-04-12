@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
@@ -264,12 +265,29 @@ func (c *DeviceController) CreateLog(ctx *gin.Context) {
 
 func (c *DeviceController) GetLogs(ctx *gin.Context) {
 	deviceID := ctx.Param("deviceId")
-	logs, err := c.deviceService.GetLogsByDeviceID(deviceID)
+	
+	// Default to 50 logs per page
+	limit := 50
+	offset := 0
+
+	if limitStr := ctx.Query("limit"); limitStr != "" {
+		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	
+	if offsetStr := ctx.Query("offset"); offsetStr != "" {
+		if parsed, err := strconv.Atoi(offsetStr); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	logs, err := c.deviceService.GetLogsByDeviceID(deviceID, limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"logs": logs})
+	ctx.JSON(http.StatusOK, gin.H{"logs": logs, "limit": limit, "offset": offset})
 }
 
 func (c *DeviceController) GetMyDevices(ctx *gin.Context) {

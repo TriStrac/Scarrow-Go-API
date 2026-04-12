@@ -85,12 +85,18 @@ func (c *GroupController) GetGroupsByOwner(ctx *gin.Context) {
 
 func (c *GroupController) GetGroupByID(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
-	group, err := c.groupService.GetGroupByID(groupID)
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	groupDetails, err := c.groupService.GetGroupDetails(groupID, callerID.(string))
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"group": group})
+	ctx.JSON(http.StatusOK, groupDetails)
 }
 
 func (c *GroupController) UpdateGroup(ctx *gin.Context) {
@@ -226,12 +232,69 @@ func (c *GroupController) RemoveMember(ctx *gin.Context) {
 
 func (c *GroupController) GetGroupMembers(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// 1. We must verify if the caller has the right to view this group.
+	// A simple way is to check the group details (which calculates the role).
+	groupDetails, err := c.groupService.GetGroupDetails(groupID, callerID.(string))
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	if groupDetails.Role == "GUEST" {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: You are not a member of this group"})
+		return
+	}
+
 	members, err := c.groupService.GetGroupMembers(groupID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"members": members})
+	ctx.JSON(http.StatusOK, members)
+}
+
+func (c *GroupController) LeaveGroup(ctx *gin.Context) {
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	// We don't have a rigid GroupID in the path for this based on the plan (POST /groups/leave), 
+	// so we assume the user is trying to leave their current group.
+	// But to be safe and RESTful, let's require the frontend to pass the group ID they are leaving.
+	var req struct {
+		GroupID string `json:"group_id" binding:"required"`
+	}
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	group, err := c.groupService.GetGroupByID(req.GroupID)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
+		return
+	}
+
+	if group.OwnerID == callerID.(string) {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Owners cannot leave their group. They must delete/disband it."})
+		return
+	}
+
+	err = c.groupService.RemoveMember(req.GroupID, callerID.(string))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Successfully left the group"})
 }
 
 func (c *GroupController) CreateInvitation(ctx *gin.Context) {

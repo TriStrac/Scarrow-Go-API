@@ -24,7 +24,7 @@ type DeviceService interface {
 
 	// Logging
 	CreateLog(deviceID, logType, payload, pestType string, freq float64, duration int) error
-	GetLogsByDeviceID(deviceID string) ([]models.DeviceLog, error)
+	GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error)
 }
 
 type deviceService struct {
@@ -184,6 +184,6 @@ func (s *deviceService) CreateLog(deviceID, logType, payload, pestType string, f
 	return s.repo.CreateLog(log)
 }
 
-func (s *deviceService) GetLogsByDeviceID(deviceID string) ([]models.DeviceLog, error) {
-	return s.repo.GetLogsByDeviceID(deviceID)
+func (s *deviceService) GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error) {
+	return s.repo.GetLogsByDeviceID(deviceID, limit, offset)
 }

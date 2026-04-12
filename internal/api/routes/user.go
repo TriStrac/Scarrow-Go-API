@@ -24,10 +24,15 @@ func SetupUserRoutes(router *gin.RouterGroup, userController *controllers.UserCo
 		protected.Use(middlewares.AuthMiddleware(userRepo))
 		{
 			protected.GET("/", userController.GetAllUsers)
+			protected.GET("/me", userController.GetMe)
 			protected.GET("/:userId", userController.GetUserByID)
 			protected.PATCH("/:userId", userController.UpdateUser)
 			protected.POST("/changePassword", userController.ChangePassword)
 			protected.PATCH("/:userId/softDelete", userController.SoftDeleteUser)
+			
+			// Push Tokens
+			protected.POST("/me/push-tokens", userController.SavePushToken)
+			protected.DELETE("/me/push-tokens/:tokenId", userController.RemovePushToken)
 		}
 	}
 }

@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
@@ -49,13 +50,26 @@ func (c *MessageController) GetThreads(ctx *gin.Context) {
 		return
 	}
 
-	threads, err := c.messageService.GetThreads(callerID.(string))
+	limit := 50
+	offset := 0
+	if limitStr := ctx.Query("limit"); limitStr != "" {
+		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if offsetStr := ctx.Query("offset"); offsetStr != "" {
+		if parsed, err := strconv.Atoi(offsetStr); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	threads, err := c.messageService.GetThreads(callerID.(string), limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"threads": threads})
+	ctx.JSON(http.StatusOK, gin.H{"threads": threads, "limit": limit, "offset": offset})
 }
 
 func (c *MessageController) GetThreadMessages(ctx *gin.Context) {
@@ -66,11 +80,40 @@ func (c *MessageController) GetThreadMessages(ctx *gin.Context) {
 		return
 	}
 
-	thread, err := c.messageService.GetThreadMessages(threadID, callerID.(string))
+	limit := 50
+	offset := 0
+	if limitStr := ctx.Query("limit"); limitStr != "" {
+		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if offsetStr := ctx.Query("offset"); offsetStr != "" {
+		if parsed, err := strconv.Atoi(offsetStr); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	thread, err := c.messageService.GetThreadMessages(threadID, callerID.(string), limit, offset)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"thread": thread})
+	ctx.JSON(http.StatusOK, gin.H{"thread": thread, "limit": limit, "offset": offset})
+}
+
+func (c *MessageController) GetUnreadSummary(ctx *gin.Context) {
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	count, err := c.messageService.GetUnreadCount(callerID.(string))
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"unread_count": count})
 }

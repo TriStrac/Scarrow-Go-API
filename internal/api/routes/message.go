@@ -12,6 +12,7 @@ func RegisterMessageRoutes(router *gin.RouterGroup, messageController *controlle
 	messageRoutes.Use(middlewares.AuthMiddleware(userRepo))
 	{
 		messageRoutes.GET("/", messageController.GetThreads)
+		messageRoutes.GET("/unread-summary", messageController.GetUnreadSummary)
 		messageRoutes.GET("/:threadId", messageController.GetThreadMessages)
 		messageRoutes.POST("/", messageController.SendMessage)
 	}

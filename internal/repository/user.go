@@ -11,10 +11,16 @@ type UserRepository interface {
 	CreateUser(user *models.User) error
 	FindByUsername(username string) (*models.User, error)
 	FindByID(id string) (*models.User, error)
+	FindWithGroupByID(id string) (*models.User, error)
 	FindAll() ([]models.User, error)
 	UpdateUser(user *models.User) error
 	SoftDelete(id string) error
 	UsernameExists(username string) (bool, error)
+	
+	// Push Tokens
+	SavePushToken(token *models.PushToken) error
+	RemovePushToken(tokenID string) error
+	GetPushTokensByUser(userID string) ([]models.PushToken, error)
 }
 
 type userRepository struct {
@@ -43,8 +49,21 @@ func (r *userRepository) FindByUsername(username string) (*models.User, error) {
 
 func (r *userRepository) FindByID(id string) (*models.User, error) {
 	var user models.User
-	// Preload nested Profile and Address data
+	// Preload nested Profile and Address data (Standard load for updates)
 	err := r.db.Preload("Profile").Preload("Address").Where("id = ?", id).First(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *userRepository) FindWithGroupByID(id string) (*models.User, error) {
+	var user models.User
+	// Preload nested Profile, Address, and Group data (Strictly for read-only session data)
+	err := r.db.Preload("Profile").Preload("Address").Preload("Group").Where("id = ?", id).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -73,4 +92,26 @@ func (r *userRepository) UsernameExists(username string) (bool, error) {
 	var count int64
 	err := r.db.Model(&models.User{}).Where("username = ?", username).Count(&count).Error
 	return count > 0, err
+}
+
+func (r *userRepository) SavePushToken(token *models.PushToken) error {
+	// Use Save or Clause(clause.OnConflict) to handle updates if the token already exists
+	var existing models.PushToken
+	if err := r.db.Where("token = ?", token.Token).First(&existing).Error; err == nil {
+		// Update the existing token's user ID if it was transferred
+		existing.UserID = token.UserID
+		existing.Platform = token.Platform
+		return r.db.Save(&existing).Error
+	}
+	return r.db.Create(token).Error
+}
+
+func (r *userRepository) RemovePushToken(tokenID string) error {
+	return r.db.Where("id = ?", tokenID).Delete(&models.PushToken{}).Error
+}
+
+func (r *userRepository) GetPushTokensByUser(userID string) ([]models.PushToken, error) {
+	var tokens []models.PushToken
+	err := r.db.Where("user_id = ?", userID).Find(&tokens).Error
+	return tokens, err
 }

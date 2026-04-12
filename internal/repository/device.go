@@ -26,7 +26,7 @@ type DeviceRepository interface {
 
 	// Logging
 	CreateLog(log *models.DeviceLog) error
-	GetLogsByDeviceID(deviceID string) ([]models.DeviceLog, error)
+	GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error)
 }
 
 type deviceRepository struct {
@@ -123,8 +123,17 @@ func (r *deviceRepository) CreateLog(log *models.DeviceLog) error {
 	return r.db.Create(log).Error
 }
 
-func (r *deviceRepository) GetLogsByDeviceID(deviceID string) ([]models.DeviceLog, error) {
+func (r *deviceRepository) GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error) {
 	var logs []models.DeviceLog
-	err := r.db.Where("device_id = ?", deviceID).Order("created_at desc").Find(&logs).Error
+	query := r.db.Where("device_id = ?", deviceID).Order("created_at desc")
+	
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	err := query.Find(&logs).Error
 	return logs, err
 }

@@ -33,6 +33,7 @@ func main() {
 	activityLogRepo := repository.NewActivityLogRepository(config.DB)
 	messageRepo := repository.NewMessageRepository(config.DB)
 	invitationRepo := repository.NewGroupInvitationRepository(config.DB)
+	subRepo := repository.NewSubscriptionRepository(config.DB)
 
 	// Utils
 	smsApiKey := os.Getenv("SMS_API_KEY")
@@ -49,6 +50,8 @@ func main() {
 	deviceService := service.NewDeviceService(deviceRepo, userRepo)
 	activityLogService := service.NewActivityLogService(activityLogRepo)
 	messageService := service.NewMessageService(messageRepo, userRepo)
+	reportService := service.NewReportService(deviceRepo, userRepo)
+	subService := service.NewSubscriptionService(subRepo, userRepo)
 
 	// Controllers
 	userController := controllers.NewUserController(userService, otpService)
@@ -57,6 +60,8 @@ func main() {
 	activityLogController := controllers.NewActivityLogController(activityLogService)
 	notificationController := controllers.NewNotificationController(notificationService)
 	messageController := controllers.NewMessageController(messageService)
+	reportController := controllers.NewReportController(reportService)
+	subController := controllers.NewSubscriptionController(subService)
 
 	// Initialize Gin router
 	router := gin.Default()
@@ -81,6 +86,8 @@ func main() {
 	routes.RegisterActivityLogRoutes(apiGroup, activityLogController, userRepo)
 	routes.RegisterNotificationRoutes(apiGroup, notificationController, userRepo)
 	routes.RegisterMessageRoutes(apiGroup, messageController, userRepo)
+	routes.RegisterReportRoutes(apiGroup, reportController, userRepo)
+	routes.RegisterSubscriptionRoutes(apiGroup, subController, userRepo)
 
 	// Get Port from env
 	port := os.Getenv("PORT")

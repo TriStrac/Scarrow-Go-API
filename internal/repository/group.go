@@ -91,7 +91,7 @@ func (r *groupRepository) ClearGroupMembers(groupID string) error {
 
 func (r *groupRepository) FindMembersByGroupID(groupID string) ([]models.User, error) {
 	var users []models.User
-	err := r.db.Where("group_id = ?", groupID).Find(&users).Error
+	err := r.db.Preload("Profile").Where("group_id = ?", groupID).Find(&users).Error
 	return users, err
 }
 

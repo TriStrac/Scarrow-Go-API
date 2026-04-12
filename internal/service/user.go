@@ -17,6 +17,16 @@ type UserFullResponse struct {
 	UnreadCount    int64            `json:"unread_messages_count"`
 }
 
+type MeResponse struct {
+	UserID             string  `json:"user_id"`
+	Username           string  `json:"username"`
+	Role               string  `json:"role"`
+	GroupID            *string `json:"group_id"`
+	GroupName          *string `json:"group_name"`
+	SubscriptionStatus string  `json:"subscription_status"`
+	ProfileComplete    bool    `json:"profile_complete"`
+}
+
 type UserService interface {
 	Register(user *models.User) (*models.User, error)
 	VerifyUser(identifier string) error
@@ -25,11 +35,14 @@ type UserService interface {
 	GetAllUsers() ([]models.User, error)
 	GetUserByID(id string) (*models.User, error)
 	GetUserFullProfile(id string) (*UserFullResponse, error)
+	GetMeSession(id string) (*MeResponse, error)
 	UpdateUser(id string, user *models.User) error
 	ChangePassword(id, newPassword string) error
 	SoftDelete(id string) error
 	UsernameExists(username string) (bool, error)
 	FindByUsername(username string) (*models.User, error)
+	SavePushToken(userID, token, platform string) error
+	RemovePushToken(tokenID string) error
 }
 
 type userService struct {
@@ -163,6 +176,42 @@ func (s *userService) GetUserFullProfile(id string) (*UserFullResponse, error) {
 	}, nil
 }
 
+func (s *userService) GetMeSession(id string) (*MeResponse, error) {
+	user, err := s.repo.FindWithGroupByID(id)
+	if err != nil || user == nil {
+		return nil, errors.New("user not found")
+	}
+
+	role := "SOLO"
+	if user.GroupID != nil {
+		if user.IsHead {
+			role = "HEAD"
+		} else {
+			role = "MEMBER"
+		}
+	}
+
+	var groupName *string
+	if user.Group != nil {
+		groupName = &user.Group.Name
+	}
+
+	profileComplete := false
+	if user.Profile != nil && user.Profile.FirstName != "" && user.Profile.LastName != "" {
+		profileComplete = true
+	}
+
+	return &MeResponse{
+		UserID:             user.ID,
+		Username:           user.Username,
+		Role:               role,
+		GroupID:            user.GroupID,
+		GroupName:          groupName,
+		SubscriptionStatus: user.SubscriptionStatus,
+		ProfileComplete:    profileComplete,
+	}, nil
+}
+
 func (s *userService) UpdateUser(id string, inputData *models.User) error {
 	user, err := s.repo.FindByID(id)
 	if err != nil {
@@ -261,4 +310,18 @@ func (s *userService) UsernameExists(username string) (bool, error) {
 
 func (s *userService) FindByUsername(username string) (*models.User, error) {
 	return s.repo.FindByUsername(username)
+}
+
+func (s *userService) SavePushToken(userID, token, platform string) error {
+	pushToken := &models.PushToken{
+		ID:       uuid.New().String(),
+		UserID:   userID,
+		Token:    token,
+		Platform: platform,
+	}
+	return s.repo.SavePushToken(pushToken)
+}
+
+func (s *userService) RemovePushToken(tokenID string) error {
+	return s.repo.RemovePushToken(tokenID)
 }

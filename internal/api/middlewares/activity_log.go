@@ -17,6 +17,7 @@ var routeActions = map[string]string{
 	"POST /api/groups/join":               "Joined a group via code",
 	"POST /api/groups/member":             "Added a member to group",
 	"DELETE /api/groups/member":           "Removed a member from group",
+	"POST /api/groups/leave":              "Left the group",
 	"POST /api/device/":                   "Added a new device",
 	"POST /api/messages/":                 "Sent a message",
 }

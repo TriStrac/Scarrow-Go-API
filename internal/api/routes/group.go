@@ -21,6 +21,7 @@ func SetupGroupRoutes(router *gin.RouterGroup, groupController *controllers.Grou
 		groupRoutes.PATCH("/:groupId/softDelete", groupController.SoftDeleteGroup)
 		groupRoutes.POST("/member", groupController.AddMember)
 		groupRoutes.DELETE("/member", groupController.RemoveMember)
+		groupRoutes.POST("/leave", groupController.LeaveGroup)
 		groupRoutes.GET("/:groupId/members", groupController.GetGroupMembers)
 		groupRoutes.POST("/:groupId/invite", groupController.CreateInvitation)
 		groupRoutes.POST("/join", groupController.JoinGroupByCode)

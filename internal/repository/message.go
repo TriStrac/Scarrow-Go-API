@@ -10,8 +10,8 @@ import (
 type MessageRepository interface {
 	CreateThread(thread *models.MessageThread) error
 	FindThreadByParticipants(userA, userB string) (*models.MessageThread, error)
-	FindThreadsByUserID(userID string) ([]models.MessageThread, error)
-	GetThreadWithMessages(threadID string, limit int) (*models.MessageThread, error)
+	FindThreadsByUserID(userID string, limit int, offset int) ([]models.MessageThread, error)
+	GetThreadWithMessages(threadID string, limit int, offset int) (*models.MessageThread, error)
 
 	CreateMessage(message *models.Message) error
 	MarkThreadAsRead(threadID, userID string) error
@@ -44,19 +44,35 @@ func (r *messageRepository) FindThreadByParticipants(userA, userB string) (*mode
 	return &thread, nil
 }
 
-func (r *messageRepository) FindThreadsByUserID(userID string) ([]models.MessageThread, error) {
+func (r *messageRepository) FindThreadsByUserID(userID string, limit int, offset int) ([]models.MessageThread, error) {
 	var threads []models.MessageThread
-	err := r.db.Preload("UserA").Preload("UserB").
+	query := r.db.Preload("UserA").Preload("UserB").
 		Where("user_a_id = ? OR user_b_id = ?", userID, userID).
-		Order("updated_at desc").Find(&threads).Error
+		Order("updated_at desc")
+
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	err := query.Find(&threads).Error
 	return threads, err
 }
 
-func (r *messageRepository) GetThreadWithMessages(threadID string, limit int) (*models.MessageThread, error) {
+func (r *messageRepository) GetThreadWithMessages(threadID string, limit int, offset int) (*models.MessageThread, error) {
 	var thread models.MessageThread
 	err := r.db.Preload("UserA").Preload("UserB").
 		Preload("Messages", func(db *gorm.DB) *gorm.DB {
-			return db.Order("created_at desc").Limit(limit)
+			query := db.Order("created_at desc")
+			if limit > 0 {
+				query = query.Limit(limit)
+			}
+			if offset > 0 {
+				query = query.Offset(offset)
+			}
+			return query
 		}).
 		Where("id = ?", threadID).First(&thread).Error
 	if err != nil {

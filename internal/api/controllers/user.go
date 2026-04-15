@@ -116,7 +116,17 @@ func (c *UserController) VerifyRegistration(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "User verified successfully. You can now login."})
+	// 4. Auto-Login: Generate and return session token
+	token, err := c.userService.Login(user.ID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Verified, but failed to generate session token: " + err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "User verified successfully.",
+		"token":   token,
+	})
 }
 
 func (c *UserController) Login(ctx *gin.Context) {

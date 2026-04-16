@@ -38,6 +38,11 @@ type ForgotPasswordReq struct {
 	Username string `json:"username" binding:"required"`
 }
 
+type ResendOTPReq struct {
+	Identifier string            `json:"identifier" binding:"required"` // Username
+	Purpose    models.OTPPurpose `json:"purpose" binding:"required,oneof=REGISTRATION LOGIN FORGOT_PASSWORD"`
+}
+
 type ResetPasswordReq struct {
 	Username    string `json:"username" binding:"required"`
 	OTP         string `json:"otp" binding:"required"`
@@ -212,6 +217,32 @@ func (c *UserController) ForgotPassword(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "OTP sent for password reset",
+	})
+}
+
+func (c *UserController) ResendOTP(ctx *gin.Context) {
+	var req ResendOTPReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Find the user to get their phone number
+	user, err := c.userService.FindByUsername(req.Identifier)
+	if err != nil || user == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		return
+	}
+
+	// Resend OTP using their phone number
+	_, err = c.otpService.GenerateAndSendOTP(user.Profile.PhoneNumber, req.Purpose)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to resend OTP: " + err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "OTP resent successfully",
 	})
 }
 

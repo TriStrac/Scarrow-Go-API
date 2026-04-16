@@ -65,7 +65,26 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 4. Login - Step 2 (❌ Public)
+### 4. Resend OTP (❌ Public)
+`POST /api/users/resend-otp`
+
+**Request Payload:**
+```json
+{
+  "identifier": "johndoe123",
+  "purpose": "REGISTRATION"
+}
+```
+*(Valid `purpose` values: "REGISTRATION", "LOGIN", "FORGOT_PASSWORD")*
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "OTP resent successfully"
+}
+```
+
+### 5. Login - Step 2 (❌ Public)
 `POST /api/users/verify-login`
 
 **Request Payload:**
@@ -83,7 +102,7 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 5. Forgot Password (❌ Public)
+### 6. Forgot Password (❌ Public)
 `POST /api/users/forgot-password`
 
 **Request Payload:**
@@ -91,7 +110,7 @@ Authorization: Bearer <your_jwt_token_here>
 { "username": "johndoe123" }
 ```
 
-### 6. Reset Password (❌ Public)
+### 7. Reset Password (❌ Public)
 `POST /api/users/reset-password`
 
 **Request Payload:**
@@ -103,7 +122,7 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 7. Get My Session Profile (🔒 Protected)
+### 8. Get My Session Profile (🔒 Protected)
 `GET /api/users/me`
 
 **Returns lightweight session and identity state to drive UI routing.**
@@ -121,12 +140,12 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 8. Get Full Profile (🔒 Protected)
+### 9. Get Full Profile (🔒 Protected)
 `GET /api/users/:userId`
 
 **Returns the comprehensive user state for caching.**
 
-### 9. Save Push Token (🔒 Protected)
+### 10. Save Push Token (🔒 Protected)
 `POST /api/users/me/push-tokens`
 
 **Request Payload:**
@@ -137,7 +156,7 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 10. Remove Push Token (🔒 Protected)
+### 11. Remove Push Token (🔒 Protected)
 `DELETE /api/users/me/push-tokens/:tokenId`
 
 ---

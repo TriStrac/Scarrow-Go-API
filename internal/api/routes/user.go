@@ -17,6 +17,7 @@ func SetupUserRoutes(router *gin.RouterGroup, userController *controllers.UserCo
 		userRoutes.POST("/verify-login", userController.VerifyLogin)
 		userRoutes.POST("/forgot-password", userController.ForgotPassword)
 		userRoutes.POST("/reset-password", userController.ResetPassword)
+		userRoutes.POST("/resend-otp", userController.ResendOTP)
 		userRoutes.GET("/usernameExists", userController.CheckUsernameExists)
 
 		// Protected Routes (Require JWT + Verified Account)

@@ -71,7 +71,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
 			"message": "Scarrow-Go-API is running",
-			"version": "1.4",
+			"version": "1.4.1",
 		})
 	})
 

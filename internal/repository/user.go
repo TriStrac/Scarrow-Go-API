@@ -10,6 +10,7 @@ import (
 type UserRepository interface {
 	CreateUser(user *models.User) error
 	FindByUsername(username string) (*models.User, error)
+	FindByPhoneNumber(phoneNumber string) ([]models.User, error)
 	FindByID(id string) (*models.User, error)
 	FindWithGroupByID(id string) (*models.User, error)
 	FindAll() ([]models.User, error)
@@ -45,6 +46,15 @@ func (r *userRepository) FindByUsername(username string) (*models.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *userRepository) FindByPhoneNumber(phoneNumber string) ([]models.User, error) {
+	var users []models.User
+	err := r.db.Joins("JOIN user_profiles ON user_profiles.user_id = users.id").
+		Where("user_profiles.phone_number = ?", phoneNumber).
+		Preload("Profile").
+		Find(&users).Error
+	return users, err
 }
 
 func (r *userRepository) FindByID(id string) (*models.User, error) {

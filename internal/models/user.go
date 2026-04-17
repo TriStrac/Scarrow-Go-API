@@ -32,7 +32,7 @@ type UserProfile struct {
 	MiddleName  string    `gorm:"type:varchar(100)" json:"middle_name"`
 	LastName    string    `gorm:"type:varchar(100)" json:"last_name"`
 	BirthDate   *time.Time `gorm:"type:date" json:"birth_date"`
-	PhoneNumber string    `gorm:"type:varchar(20)" json:"phone_number"`
+	PhoneNumber string    `gorm:"type:varchar(20);uniqueIndex" json:"phone_number"`
 }
 
 type UserAddress struct {

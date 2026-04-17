@@ -1,7 +1,7 @@
 # Scarrow-Go-API - Frontend Integration Guide 🚀
 
 **Base URL:** `http://localhost:8080` (Local) / `https://api.scarrow.com` (Production)
-**Version:** 1.4.1
+**Version:** 1.5.0
 
 ## 🔑 Global Configuration
 
@@ -17,6 +17,8 @@ Authorization: Bearer <your_jwt_token_here>
 
 ### 1. Register a New User (❌ Public)
 `POST /api/users/`
+
+*Note: The `number` field must be unique across the system. A phone number can only be registered to one account.*
 
 **Request Payload:**
 ```json
@@ -43,6 +45,20 @@ Authorization: Bearer <your_jwt_token_here>
 {
   "identifier": "johndoe123",
   "code": "123456"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "User verified successfully.",
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "user": {
+    "id": "uuid-1234",
+    "username": "johndoe123",
+    "phone_number": "09123456789",
+    "subscription_status": "FREE"
+  }
 }
 ```
 

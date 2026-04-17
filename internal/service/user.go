@@ -41,6 +41,7 @@ type UserService interface {
 	SoftDelete(id string) error
 	UsernameExists(username string) (bool, error)
 	FindByUsername(username string) (*models.User, error)
+	FindByPhoneNumber(phoneNumber string) ([]models.User, error)
 	SavePushToken(userID, token, platform string) error
 	RemovePushToken(tokenID string) error
 }
@@ -63,6 +64,17 @@ func (s *userService) Register(user *models.User) (*models.User, error) {
 	}
 	if exists {
 		return nil, errors.New("username already exists")
+	}
+
+	// Check if phone number is already registered
+	if user.Profile != nil && user.Profile.PhoneNumber != "" {
+		existingUsers, err := s.repo.FindByPhoneNumber(user.Profile.PhoneNumber)
+		if err != nil {
+			return nil, err
+		}
+		if len(existingUsers) > 0 {
+			return nil, errors.New("phone number is already registered")
+		}
 	}
 
 	// Hash password
@@ -94,8 +106,6 @@ func (s *userService) VerifyUser(identifier string) error {
 		return err
 	}
 	if user == nil {
-		// Try by phone number if identifier is not username
-		// For now, let's assume identifier is username for simplicity or we need a FindByPhone
 		return errors.New("user not found")
 	}
 
@@ -310,6 +320,10 @@ func (s *userService) UsernameExists(username string) (bool, error) {
 
 func (s *userService) FindByUsername(username string) (*models.User, error) {
 	return s.repo.FindByUsername(username)
+}
+
+func (s *userService) FindByPhoneNumber(phoneNumber string) ([]models.User, error) {
+	return s.repo.FindByPhoneNumber(phoneNumber)
 }
 
 func (s *userService) SavePushToken(userID, token, platform string) error {

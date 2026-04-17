@@ -131,6 +131,12 @@ func (c *UserController) VerifyRegistration(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "User verified successfully.",
 		"token":   token,
+		"user": gin.H{
+			"id":                  user.ID,
+			"username":            user.Username,
+			"phone_number":        user.Profile.PhoneNumber,
+			"subscription_status": user.SubscriptionStatus,
+		},
 	})
 }
 

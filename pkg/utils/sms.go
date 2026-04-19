@@ -52,7 +52,6 @@ func (s *RealSmsService) sendViaSemaphore(to string, message string) error {
 		"apikey":  s.apiKey,
 		"number":  to,
 		"message": message,
-		// "sendername": "Scarrow", // Optional, uncomment if you have a registered sender name
 	}
 
 	jsonData, err := json.Marshal(payload)

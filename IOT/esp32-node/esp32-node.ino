@@ -35,10 +35,10 @@ bool isSetupMode = false;
 // --- BLE Setup Callbacks ---
 class MyCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
-      std::string value = pCharacteristic->getValue();
+      String value = pCharacteristic->getValue();
       if (value.length() > 0) {
         Serial.println("Received Provisioning Data...");
-        StaticJsonDocument<512> doc;
+        JsonDocument doc;
         DeserializationError error = deserializeJson(doc, value);
 
         if (error) {
@@ -73,6 +73,7 @@ void enterSetupMode() {
   Serial.println("Entering SETUP MODE...");
   
   BLEDevice::init("Scarrow_Node_Setup");
+  BLEDevice::setMTU(512); // Ensure we can receive the full JSON payload
   BLEServer *pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
 

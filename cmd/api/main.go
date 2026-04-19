@@ -36,9 +36,9 @@ func main() {
 	subRepo := repository.NewSubscriptionRepository(config.DB)
 
 	// Utils
-	smsApiKey := os.Getenv("SMS_API_KEY")
+	smsApiKey := os.Getenv("SEMAPHORE_API_KEY")
 	if smsApiKey == "" {
-		log.Println("WARNING: SMS_API_KEY is not set. SMS sending might fail.")
+		log.Println("WARNING: SEMAPHORE_API_KEY is not set. SMS sending might fail.")
 	}
 	smsService := utils.NewRealSmsService(smsApiKey)
 
@@ -71,7 +71,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
 			"message": "Scarrow-Go-API is running",
-			"version": "1.5.0",
+			"version": "1.6.0",
 		})
 	})
 

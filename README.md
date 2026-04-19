@@ -1,7 +1,7 @@
 # Scarrow-Go-API - Frontend Integration Guide 🚀
 
 **Base URL:** `http://localhost:8080` (Local) / `https://api.scarrow.com` (Production)
-**Version:** 1.5.0
+**Version:** 1.6.0
 
 ## 🔑 Global Configuration
 
@@ -174,6 +174,11 @@ Authorization: Bearer <your_jwt_token_here>
 
 ### 11. Remove Push Token (🔒 Protected)
 `DELETE /api/users/me/push-tokens/:tokenId`
+
+### 12. Hard Delete User (Development) (🔒 Protected)
+`DELETE /api/users/:userId/hard`
+
+**Note: For development purposes. Permanently deletes the user account and perfectly wipes all associated data (messages, logs, tokens, profiles, etc.) from the database.**
 
 ---
 

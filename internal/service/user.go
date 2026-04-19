@@ -39,6 +39,7 @@ type UserService interface {
 	UpdateUser(id string, user *models.User) error
 	ChangePassword(id, newPassword string) error
 	SoftDelete(id string) error
+	HardDelete(id string) error
 	UsernameExists(username string) (bool, error)
 	FindByUsername(username string) (*models.User, error)
 	FindByPhoneNumber(phoneNumber string) ([]models.User, error)
@@ -312,6 +313,12 @@ func (s *userService) SoftDelete(id string) error {
 	// Unpair all devices owned by this user
 	_ = s.deviceRepo.RemoveAllOwnersByOwner(id, "USER")
 	return s.repo.SoftDelete(id)
+}
+
+func (s *userService) HardDelete(id string) error {
+	// Unpair all devices owned by this user
+	_ = s.deviceRepo.RemoveAllOwnersByOwner(id, "USER")
+	return s.repo.HardDelete(id)
 }
 
 func (s *userService) UsernameExists(username string) (bool, error) {

@@ -12,6 +12,7 @@ type OTPRepository interface {
 	GetLatestOTP(identifier string, purpose models.OTPPurpose) (*models.OTPCode, error)
 	MarkAsUsed(id string) error
 	CountRecentOTPs(identifier string, duration time.Duration) (int64, error)
+	UpdateOTP(otp *models.OTPCode) error
 }
 
 type otpRepository struct {
@@ -24,6 +25,10 @@ func NewOTPRepository(db *gorm.DB) OTPRepository {
 
 func (r *otpRepository) CreateOTP(otp *models.OTPCode) error {
 	return r.db.Create(otp).Error
+}
+
+func (r *otpRepository) UpdateOTP(otp *models.OTPCode) error {
+	return r.db.Save(otp).Error
 }
 
 func (r *otpRepository) GetLatestOTP(identifier string, purpose models.OTPPurpose) (*models.OTPCode, error) {

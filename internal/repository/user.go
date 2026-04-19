@@ -16,6 +16,7 @@ type UserRepository interface {
 	FindAll() ([]models.User, error)
 	UpdateUser(user *models.User) error
 	SoftDelete(id string) error
+	HardDelete(id string) error
 	UsernameExists(username string) (bool, error)
 	
 	// Push Tokens
@@ -96,6 +97,30 @@ func (r *userRepository) UpdateUser(user *models.User) error {
 
 func (r *userRepository) SoftDelete(id string) error {
 	return r.db.Model(&models.User{}).Where("id = ?", id).Update("is_deleted", true).Delete(&models.User{ID: id}).Error
+}
+
+func (r *userRepository) HardDelete(id string) error {
+	// First un-scope delete directly related records to ensure clean wipe if DB constraints aren't doing it
+	r.db.Unscoped().Where("user_id = ?", id).Delete(&models.UserProfile{})
+	r.db.Unscoped().Where("user_id = ?", id).Delete(&models.UserAddress{})
+	r.db.Unscoped().Where("user_id = ?", id).Delete(&models.PushToken{})
+	r.db.Unscoped().Where("user_id = ?", id).Delete(&models.UserSubscription{})
+	r.db.Unscoped().Where("user_id = ?", id).Delete(&models.Notification{})
+	r.db.Unscoped().Where("user_id = ?", id).Delete(&models.UserActivityLog{})
+	
+	// Message threads (either user A or user B)
+	var threads []models.MessageThread
+	r.db.Unscoped().Where("user_a_id = ? OR user_b_id = ?", id, id).Find(&threads)
+	for _, t := range threads {
+		r.db.Unscoped().Where("thread_id = ?", t.ID).Delete(&models.Message{})
+		r.db.Unscoped().Delete(&t)
+	}
+
+	// Delete standalone messages just in case
+	r.db.Unscoped().Where("sender_id = ?", id).Delete(&models.Message{})
+
+	// Finally hard delete the user itself
+	return r.db.Unscoped().Where("id = ?", id).Delete(&models.User{}).Error
 }
 
 func (r *userRepository) UsernameExists(username string) (bool, error) {

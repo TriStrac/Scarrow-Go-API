@@ -15,7 +15,7 @@ type SmsService interface {
 	SendSMS(to string, message string) error
 }
 
-// RealSmsService implements SmsService using the provided SMS API
+// RealSmsService implements SmsService using Semaphore API
 type RealSmsService struct {
 	apiKey string
 	apiUrl string
@@ -24,22 +24,20 @@ type RealSmsService struct {
 func NewRealSmsService(apiKey string) SmsService {
 	return &RealSmsService{
 		apiKey: apiKey,
-		apiUrl: "https://smsapiph.onrender.com/api/v1/send/sms",
+		apiUrl: "https://api.semaphore.co/api/v4/messages",
 	}
 }
 
 func (s *RealSmsService) formatPhoneNumber(to string) string {
 	to = strings.TrimSpace(to)
-	if strings.HasPrefix(to, "09") && len(to) == 11 {
-		return "+63" + to[1:]
-	}
+	// Semaphore prefers 09XXXXXXXXX or +639XXXXXXXXX
 	return to
 }
 
 func (s *RealSmsService) SendSMS(to string, message string) error {
 	formattedTo := s.formatPhoneNumber(to)
 
-	err := s.sendViaSMS(formattedTo, message)
+	err := s.sendViaSemaphore(formattedTo, message)
 	if err != nil {
 		log.Printf("[SMS FAILED] To: %s, Error: %v\n", formattedTo, err)
 		return err
@@ -49,10 +47,12 @@ func (s *RealSmsService) SendSMS(to string, message string) error {
 	return nil
 }
 
-func (s *RealSmsService) sendViaSMS(to string, message string) error {
+func (s *RealSmsService) sendViaSemaphore(to string, message string) error {
 	payload := map[string]interface{}{
-		"recipient": to,
-		"message":   message,
+		"apikey":  s.apiKey,
+		"number":  to,
+		"message": message,
+		// "sendername": "Scarrow", // Optional, uncomment if you have a registered sender name
 	}
 
 	jsonData, err := json.Marshal(payload)
@@ -65,7 +65,6 @@ func (s *RealSmsService) sendViaSMS(to string, message string) error {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("x-api-key", s.apiKey)
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{

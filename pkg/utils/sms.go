@@ -52,6 +52,7 @@ func (s *RealSmsService) sendViaSemaphore(to string, message string) error {
 	data.Set("apikey", s.apiKey)
 	data.Set("number", to)
 	data.Set("message", message)
+	data.Set("sendername", "AgriLink")
 
 	req, err := http.NewRequest("POST", s.apiUrl, strings.NewReader(data.Encode()))
 	if err != nil {
@@ -69,9 +70,17 @@ func (s *RealSmsService) sendViaSemaphore(to string, message string) error {
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	bodyStr := string(bodyBytes)
+	log.Printf("[SEMAPHORE API] Status: %d, Response: %s", resp.StatusCode, bodyStr)
+
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("unexpected status code: %d, response: %s", resp.StatusCode, string(bodyBytes))
+		return fmt.Errorf("unexpected status code: %d, response: %s", resp.StatusCode, bodyStr)
+	}
+
+	// Semaphore returns HTTP 200 even for validation errors
+	if strings.Contains(bodyStr, "is required") || strings.Contains(bodyStr, "Invalid") {
+		return fmt.Errorf("semaphore API validation error: %s", bodyStr)
 	}
 
 	return nil

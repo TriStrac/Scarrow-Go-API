@@ -15,7 +15,7 @@ type User struct {
 	IsInGroup          bool           `gorm:"default:false" json:"is_user_in_group"`
 	IsHead             bool           `gorm:"default:false" json:"is_user_head"`
 	IsVerified         bool           `gorm:"default:false" json:"is_verified"`
-	SubscriptionStatus string         `gorm:"type:varchar(50);default:'FREE'" json:"subscription_status"`
+	SubscriptionStatus string         `gorm:"type:varchar(50);default:'PREMIUM'" json:"subscription_status"`
 	IsDeleted          bool           `gorm:"default:false" json:"is_deleted"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`

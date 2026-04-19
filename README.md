@@ -57,7 +57,7 @@ Authorization: Bearer <your_jwt_token_here>
     "id": "uuid-1234",
     "username": "johndoe123",
     "phone_number": "09123456789",
-    "subscription_status": "FREE"
+    "subscription_status": "PREMIUM"
   }
 }
 ```
@@ -151,7 +151,7 @@ Authorization: Bearer <your_jwt_token_here>
   "role": "HEAD",
   "group_id": "group-uuid",
   "group_name": "My Farm Co",
-  "subscription_status": "FREE",
+  "subscription_status": "PREMIUM",
   "profile_complete": true
 }
 ```

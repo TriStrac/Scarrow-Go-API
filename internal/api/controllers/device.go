@@ -17,6 +17,18 @@ func NewDeviceController(deviceService service.DeviceService) *DeviceController 
 	return &DeviceController{deviceService: deviceService}
 }
 
+type RegisterHubReq struct {
+	Name        string   `json:"name" binding:"required"`
+	LocationLat *float64 `json:"location_lat"`
+	LocationLng *float64 `json:"location_lng"`
+}
+
+type RegisterNodeReq struct {
+	HubID    string `json:"hub_id" binding:"required"`
+	NodeType string `json:"node_type" binding:"required"`
+	Label    string `json:"label" binding:"required"`
+}
+
 type CreateDeviceReq struct {
 	Name       string            `json:"name" binding:"required"`
 	OwnerType  string            `json:"owner_type" binding:"required,oneof=USER GROUP"`
@@ -45,6 +57,59 @@ type CreateDeviceLogReq struct {
 	PestType        string  `json:"pest_type"`
 	FrequencyHz     float64 `json:"frequency_hz"`
 	DurationSeconds int     `json:"duration_seconds"`
+}
+
+func (c *DeviceController) RegisterHub(ctx *gin.Context) {
+	var req RegisterHubReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	hub, err := c.deviceService.RegisterHub(req.Name, callerID.(string), req.LocationLat, req.LocationLng)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"hub_id": hub.ID,
+		"secret": hub.Secret,
+		"status": hub.Status,
+	})
+}
+
+func (c *DeviceController) RegisterNode(ctx *gin.Context) {
+	var req RegisterNodeReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	node, err := c.deviceService.RegisterNode(req.Label, callerID.(string), req.HubID, req.NodeType)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"node_id":     node.ID,
+		"node_secret": node.Secret,
+		"hub_filter":  req.HubID,
+		"status":      node.Status,
+	})
 }
 
 func (c *DeviceController) CreateDevice(ctx *gin.Context) {

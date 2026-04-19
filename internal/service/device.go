@@ -5,11 +5,14 @@ import (
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
+	"github.com/TriStrac/Scarrow-Go-API/pkg/utils"
 	"github.com/google/uuid"
 )
 
 type DeviceService interface {
 	CreateDevice(name string, userID string, ownerType string, deviceType models.DeviceType, parentID *string) (*models.Device, error)
+	RegisterHub(name string, userID string, lat, lng *float64) (*models.Device, error)
+	RegisterNode(name string, userID string, hubID string, nodeType string) (*models.Device, error)
 	GetAllDevices() ([]models.Device, error)
 	GetDeviceByID(id string) (*models.Device, error)
 	UpdateDevice(id string, name string, status string) error
@@ -80,6 +83,79 @@ func (s *deviceService) CreateDevice(name string, userID string, ownerType strin
 	err = s.repo.AddOwner(owner)
 	if err != nil {
 		// Rollback device creation if owner add fails
+		return nil, err
+	}
+
+	return device, nil
+}
+
+func (s *deviceService) RegisterHub(name string, userID string, lat, lng *float64) (*models.Device, error) {
+	device := &models.Device{
+		ID:       utils.GenerateDeviceID("HUB"),
+		Name:     name,
+		Type:     models.DeviceTypeCentral,
+		Status:   "active",
+		Secret:   utils.GenerateSecret(32),
+		Lat:      lat,
+		Lng:      lng,
+	}
+
+	err := s.repo.CreateDevice(device)
+	if err != nil {
+		return nil, err
+	}
+
+	owner := &models.DeviceOwner{
+		DeviceID:  device.ID,
+		OwnerID:   userID,
+		OwnerType: "USER", // Defaulting to user, could be group depending on logic
+	}
+
+	err = s.repo.AddOwner(owner)
+	if err != nil {
+		return nil, err
+	}
+
+	return device, nil
+}
+
+func (s *deviceService) RegisterNode(name string, userID string, hubID string, nodeType string) (*models.Device, error) {
+	// Verify hub exists and caller is owner
+	hub, err := s.GetDeviceByID(hubID)
+	if err != nil {
+		return nil, err
+	}
+	isOwner, err := s.IsOwner(hub.ID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, errors.New("unauthorized: not an owner of the specified hub")
+	}
+
+	device := &models.Device{
+		ID:       utils.GenerateDeviceID("NODE"),
+		Name:     name,
+		Type:     models.DeviceTypeNode,
+		Status:   "active",
+		Secret:   utils.GenerateSecret(32),
+		ParentID: &hub.ID,
+		NodeType: nodeType,
+	}
+
+	err = s.repo.CreateDevice(device)
+	if err != nil {
+		return nil, err
+	}
+
+	owner := &models.DeviceOwner{
+		DeviceID:  device.ID,
+		OwnerID:   userID,
+		OwnerType: "USER",
+	}
+
+	err = s.repo.AddOwner(owner)
+	if err != nil {
 		return nil, err
 	}
 

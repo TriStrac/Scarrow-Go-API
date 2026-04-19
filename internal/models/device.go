@@ -19,6 +19,10 @@ type Device struct {
 	Type      DeviceType     `gorm:"type:varchar(20);not null;default:'CENTRAL'" json:"device_type"`
 	ParentID  *string        `gorm:"type:varchar(36);index" json:"parent_id"`
 	Status    string         `gorm:"type:varchar(50);default:'OFFLINE'" json:"status"`
+	Secret    string         `gorm:"type:varchar(64)" json:"secret,omitempty"`
+	Lat       *float64       `gorm:"type:decimal(10,8)" json:"lat,omitempty"`
+	Lng       *float64       `gorm:"type:decimal(11,8)" json:"lng,omitempty"`
+	NodeType  string         `gorm:"type:varchar(50)" json:"node_type,omitempty"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`

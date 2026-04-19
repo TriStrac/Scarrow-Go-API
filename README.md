@@ -260,7 +260,58 @@ Authorization: Bearer <your_jwt_token_here>
 
 ## 📱 Devices Module (`/api/device`)
 
-### 1. Create Device (🔒 Protected)
+### Phase 2: Hardware Provisioning (BLE "Zero-Router" Setup)
+
+### 1. Register a Hub (Raspberry Pi) (🔒 Protected)
+`POST /api/hubs/register`
+
+**Role:** Used by the Mobile App during BLE provisioning to register a new central hub. Generates a unique Hub ID and a Secret.
+
+**Request Payload:**
+```json
+{
+  "name": "North Field Hub",
+  "location_lat": 14.5995,
+  "location_lng": 120.9842
+}
+```
+
+**Success Response (201 Created):**
+```json
+{
+  "hub_id": "HUB-XXXX-YYYY",
+  "secret": "RandomString32",
+  "status": "active"
+}
+```
+
+### 2. Register a Node (ESP32) (🔒 Protected)
+`POST /api/nodes/register`
+
+**Role:** Used by the Mobile App during BLE provisioning to register a new field node. Generates a unique Node ID and a Node Secret for Hub communication.
+
+**Request Payload:**
+```json
+{
+  "hub_id": "HUB-XXXX-YYYY",
+  "node_type": "deterrence_v1",
+  "label": "Corn Corner A"
+}
+```
+
+**Success Response (201 Created):**
+```json
+{
+  "node_id": "NODE-ZZZZ-WWWW",
+  "node_secret": "RandomString32",
+  "hub_filter": "HUB-XXXX-YYYY",
+  "status": "active"
+}
+```
+
+### Legacy Device Endpoints
+
+### 3. Create Device (Legacy) (🔒 Protected)
 `POST /api/device/`
 
 **Request Payload:**
@@ -274,10 +325,10 @@ Authorization: Bearer <your_jwt_token_here>
 ```
 *(Use `device_type`: 'CENTRAL' or 'NODE').*
 
-### 2. Get My Devices (🔒 Protected)
+### 4. Get My Devices (🔒 Protected)
 `GET /api/device/my`
 
-### 4. Get Device Logs (History) (🔒 Protected)
+### 5. Get Device Logs (History) (🔒 Protected)
 `GET /api/device/:deviceId/logs?limit=50&offset=0`
 
 **Returns paginated telemetry history.**

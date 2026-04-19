@@ -8,6 +8,20 @@ import (
 )
 
 func RegisterDeviceRoutes(router *gin.RouterGroup, deviceController *controllers.DeviceController, userRepo repository.UserRepository) {
+	// Provisioning endpoints
+	hubsRoutes := router.Group("/hubs")
+	hubsRoutes.Use(middlewares.AuthMiddleware(userRepo))
+	{
+		hubsRoutes.POST("/register", deviceController.RegisterHub)
+	}
+
+	nodesRoutes := router.Group("/nodes")
+	nodesRoutes.Use(middlewares.AuthMiddleware(userRepo))
+	{
+		nodesRoutes.POST("/register", deviceController.RegisterNode)
+	}
+
+	// Legacy or general device routes
 	deviceRoutes := router.Group("/device")
 	deviceRoutes.Use(middlewares.AuthMiddleware(userRepo))
 	{

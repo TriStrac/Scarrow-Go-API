@@ -1,11 +1,11 @@
 package utils
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -48,23 +48,17 @@ func (s *RealSmsService) SendSMS(to string, message string) error {
 }
 
 func (s *RealSmsService) sendViaSemaphore(to string, message string) error {
-	payload := map[string]interface{}{
-		"apikey":  s.apiKey,
-		"number":  to,
-		"message": message,
-	}
+	data := url.Values{}
+	data.Set("apikey", s.apiKey)
+	data.Set("number", to)
+	data.Set("message", message)
 
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return fmt.Errorf("failed to marshal payload: %w", err)
-	}
-
-	req, err := http.NewRequest("POST", s.apiUrl, bytes.NewBuffer(jsonData))
+	req, err := http.NewRequest("POST", s.apiUrl, strings.NewReader(data.Encode()))
 	if err != nil {
 		return fmt.Errorf("failed to create request: %w", err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -76,7 +70,8 @@ func (s *RealSmsService) sendViaSemaphore(to string, message string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unexpected status code: %d, response: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	return nil

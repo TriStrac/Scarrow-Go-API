@@ -4,13 +4,11 @@
 #include <BLE2902.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
-#include <esp_system.h>
 
 HardwareSerial UART1(1);
 HardwareSerial UART2(2);
 
 #define RADAR1_OT1 16
-#define RADAR1_TX 17
 #define RADAR2_OT1 13
 #define RADAR2_RX 12
 #define RADAR2_TX 10
@@ -154,14 +152,10 @@ void setup() {
   pinMode(RADAR2_OT1, INPUT);
   Serial.println("[DEBUG] 4: pinMode done");
 
-  noInterrupts();
   UART1.begin(115200, SERIAL_8N1, 17, 16);
-  interrupts();
   Serial.println("[DEBUG] 5: UART1 begin done");
 
-  noInterrupts();
   UART2.begin(115200, SERIAL_8N1, RADAR2_RX, RADAR2_TX);
-  interrupts();
   Serial.println("[DEBUG] 6: UART2 begin done");
 
   delay(2000);

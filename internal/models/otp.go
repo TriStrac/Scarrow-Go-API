@@ -13,9 +13,9 @@ const (
 )
 
 type OTPCode struct {
-	ID          string     `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID          string     `gorm:"column:otp_id;type:varchar(36);primaryKey" json:"id"`
 	Identifier  string     `gorm:"type:varchar(100);index;not null" json:"identifier"` // Username
-	Destination string     `gorm:"type:varchar(20);not null" json:"destination"` // Phone Number
+	Destination string     `gorm:"type:varchar(20);not null" json:"destination"`      // Phone Number
 	Code        string     `gorm:"type:varchar(6);not null" json:"code"`
 	Purpose     OTPPurpose `gorm:"type:varchar(20);not null" json:"purpose"`
 	Payload     string     `gorm:"type:text" json:"payload"` // Optional JSON payload (e.g., for registration)

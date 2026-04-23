@@ -48,7 +48,7 @@ func (r *groupRepository) FindByOwnerID(ownerID string) ([]models.Group, error) 
 
 func (r *groupRepository) FindByID(id string) (*models.Group, error) {
 	var group models.Group
-	err := r.db.Preload("Owner").Where("id = ?", id).First(&group).Error
+	err := r.db.Preload("Owner").Where("group_id = ?", id).First(&group).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -63,12 +63,12 @@ func (r *groupRepository) UpdateGroup(group *models.Group) error {
 }
 
 func (r *groupRepository) SoftDelete(id string) error {
-	return r.db.Model(&models.Group{}).Where("id = ?", id).Update("is_deleted", true).Delete(&models.Group{ID: id}).Error
+	return r.db.Model(&models.Group{}).Where("group_id = ?", id).Update("is_deleted", true).Delete(&models.Group{ID: id}).Error
 }
 
 func (r *groupRepository) AddMember(groupID, userID string) error {
 	// Directly update the user's group_id
-	return r.db.Model(&models.User{}).Where("id = ?", userID).Updates(map[string]interface{}{
+	return r.db.Model(&models.User{}).Where("user_id = ?", userID).Updates(map[string]interface{}{
 		"group_id":         groupID,
 		"is_user_in_group": true,
 		"is_user_head":     false,
@@ -77,7 +77,7 @@ func (r *groupRepository) AddMember(groupID, userID string) error {
 
 func (r *groupRepository) RemoveMember(groupID, userID string) error {
 	// Directly nullify the user's group_id
-	return r.db.Model(&models.User{}).Where("id = ? AND group_id = ?", userID, groupID).Updates(map[string]interface{}{
+	return r.db.Model(&models.User{}).Where("user_id = ? AND group_id = ?", userID, groupID).Updates(map[string]interface{}{
 		"group_id":         nil,
 		"is_user_in_group": false,
 		"is_user_head":     false,
@@ -97,8 +97,8 @@ func (r *groupRepository) ClearGroupMembers(groupID string) error {
 
 	// Also explicitly ensure the group owner's flags are reset, in case they were stuck
 	var group models.Group
-	if err := r.db.Where("id = ?", groupID).First(&group).Error; err == nil {
-		r.db.Model(&models.User{}).Where("id = ?", group.OwnerID).Updates(map[string]interface{}{
+	if err := r.db.Where("group_id = ?", groupID).First(&group).Error; err == nil {
+		r.db.Model(&models.User{}).Where("user_id = ?", group.OwnerID).Updates(map[string]interface{}{
 			"group_id":         nil,
 			"is_user_in_group": false,
 			"is_user_head":     false,
@@ -122,6 +122,6 @@ func (r *groupRepository) GroupNameExists(name string) (bool, error) {
 
 func (r *groupRepository) IsMember(groupID, userID string) (bool, error) {
 	var count int64
-	err := r.db.Model(&models.User{}).Where("id = ? AND group_id = ?", userID, groupID).Count(&count).Error
+	err := r.db.Model(&models.User{}).Where("user_id = ? AND group_id = ?", userID, groupID).Count(&count).Error
 	return count > 0, err
 }

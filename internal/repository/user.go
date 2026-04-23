@@ -51,7 +51,7 @@ func (r *userRepository) FindByUsername(username string) (*models.User, error) {
 
 func (r *userRepository) FindByPhoneNumber(phoneNumber string) ([]models.User, error) {
 	var users []models.User
-	err := r.db.Joins("JOIN user_profiles ON user_profiles.user_id = users.id").
+	err := r.db.Joins("JOIN user_profiles ON user_profiles.user_id = users.user_id").
 		Where("user_profiles.phone_number = ?", phoneNumber).
 		Preload("Profile").
 		Find(&users).Error
@@ -61,7 +61,7 @@ func (r *userRepository) FindByPhoneNumber(phoneNumber string) ([]models.User, e
 func (r *userRepository) FindByID(id string) (*models.User, error) {
 	var user models.User
 	// Preload nested Profile and Address data (Standard load for updates)
-	err := r.db.Preload("Profile").Preload("Address").Where("id = ?", id).First(&user).Error
+	err := r.db.Preload("Profile").Preload("Address").Where("user_id = ?", id).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -74,7 +74,7 @@ func (r *userRepository) FindByID(id string) (*models.User, error) {
 func (r *userRepository) FindWithGroupByID(id string) (*models.User, error) {
 	var user models.User
 	// Preload nested Profile, Address, and Group data (Strictly for read-only session data)
-	err := r.db.Preload("Profile").Preload("Address").Preload("Group").Where("id = ?", id).First(&user).Error
+	err := r.db.Preload("Profile").Preload("Address").Preload("Group").Where("user_id = ?", id).First(&user).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -96,7 +96,7 @@ func (r *userRepository) UpdateUser(user *models.User) error {
 }
 
 func (r *userRepository) SoftDelete(id string) error {
-	return r.db.Model(&models.User{}).Where("id = ?", id).Update("is_deleted", true).Delete(&models.User{ID: id}).Error
+	return r.db.Model(&models.User{}).Where("user_id = ?", id).Update("is_deleted", true).Delete(&models.User{ID: id}).Error
 }
 
 func (r *userRepository) HardDelete(id string) error {
@@ -120,7 +120,7 @@ func (r *userRepository) HardDelete(id string) error {
 	r.db.Unscoped().Where("sender_id = ?", id).Delete(&models.Message{})
 
 	// Finally hard delete the user itself
-	return r.db.Unscoped().Where("id = ?", id).Delete(&models.User{}).Error
+	return r.db.Unscoped().Where("user_id = ?", id).Delete(&models.User{}).Error
 }
 
 func (r *userRepository) UsernameExists(username string) (bool, error) {
@@ -142,7 +142,7 @@ func (r *userRepository) SavePushToken(token *models.PushToken) error {
 }
 
 func (r *userRepository) RemovePushToken(tokenID string) error {
-	return r.db.Where("id = ?", tokenID).Delete(&models.PushToken{}).Error
+	return r.db.Where("token_id = ?", tokenID).Delete(&models.PushToken{}).Error
 }
 
 func (r *userRepository) GetPushTokensByUser(userID string) ([]models.PushToken, error) {

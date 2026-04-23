@@ -43,7 +43,7 @@ func (r *otpRepository) GetLatestOTP(identifier string, purpose models.OTPPurpos
 }
 
 func (r *otpRepository) MarkAsUsed(id string) error {
-	return r.db.Model(&models.OTPCode{}).Where("id = ?", id).Update("is_used", true).Error
+	return r.db.Model(&models.OTPCode{}).Where("otp_id = ?", id).Update("is_used", true).Error
 }
 
 func (r *otpRepository) CountRecentOTPs(identifier string, duration time.Duration) (int64, error) {

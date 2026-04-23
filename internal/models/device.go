@@ -14,7 +14,7 @@ const (
 )
 
 type Device struct {
-	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID        string         `gorm:"column:device_id;type:varchar(36);primaryKey" json:"id"`
 	Name      string         `gorm:"type:varchar(100);not null" json:"name"`
 	Type      DeviceType     `gorm:"type:varchar(20);not null;default:'CENTRAL'" json:"device_type"`
 	ParentID  *string        `gorm:"type:varchar(36);index" json:"parent_id"`
@@ -28,8 +28,8 @@ type Device struct {
 	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Parent *Device  `gorm:"foreignKey:ParentID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
-	Nodes  []Device `gorm:"foreignKey:ParentID;references:ID" json:"nodes,omitempty"`
+	Parent *Device  `gorm:"foreignKey:ParentID;references:DeviceID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	Nodes  []Device `gorm:"foreignKey:ParentID;references:DeviceID" json:"nodes,omitempty"`
 }
 
 type DeviceOwner struct {
@@ -39,7 +39,7 @@ type DeviceOwner struct {
 }
 
 type DeviceLog struct {
-	ID              string    `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID              string    `gorm:"column:log_id;type:varchar(36);primaryKey" json:"id"`
 	DeviceID        string    `gorm:"type:varchar(36);not null;index" json:"device_id"`
 	LogType         string    `gorm:"type:varchar(50);not null" json:"log_type"`
 	PestType        string    `gorm:"type:varchar(50)" json:"pest_type"`

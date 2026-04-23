@@ -31,7 +31,7 @@ func (r *notificationRepository) FindByUserID(userID string) ([]models.Notificat
 }
 
 func (r *notificationRepository) MarkAsRead(id string) error {
-	return r.db.Model(&models.Notification{}).Where("id = ?", id).Update("is_read", true).Error
+	return r.db.Model(&models.Notification{}).Where("notification_id = ?", id).Update("is_read", true).Error
 }
 
 func (r *notificationRepository) MarkAllAsRead(userID string) error {

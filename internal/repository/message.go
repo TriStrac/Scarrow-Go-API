@@ -74,7 +74,7 @@ func (r *messageRepository) GetThreadWithMessages(threadID string, limit int, of
 			}
 			return query
 		}).
-		Where("id = ?", threadID).First(&thread).Error
+		Where("thread_id = ?", threadID).First(&thread).Error
 	if err != nil {
 		return nil, err
 	}
@@ -87,7 +87,7 @@ func (r *messageRepository) CreateMessage(message *models.Message) error {
 			return err
 		}
 		// Update thread's updated_at
-		return tx.Model(&models.MessageThread{}).Where("id = ?", message.ThreadID).Update("updated_at", gorm.Expr("NOW()")).Error
+		return tx.Model(&models.MessageThread{}).Where("thread_id = ?", message.ThreadID).Update("updated_at", gorm.Expr("NOW()")).Error
 	})
 }
 
@@ -100,7 +100,7 @@ func (r *messageRepository) MarkThreadAsRead(threadID, userID string) error {
 func (r *messageRepository) UnreadCountByUser(userID string) (int64, error) {
 	var count int64
 	err := r.db.Model(&models.Message{}).
-		Joins("JOIN message_threads ON messages.thread_id = message_threads.id").
+		Joins("JOIN message_threads ON messages.thread_id = message_threads.thread_id").
 		Where("(message_threads.user_a_id = ? OR message_threads.user_b_id = ?) AND messages.sender_id != ? AND messages.is_read = ?",
 			userID, userID, userID, false).
 		Count(&count).Error
@@ -110,7 +110,7 @@ func (r *messageRepository) UnreadCountByUser(userID string) (int64, error) {
 func (r *messageRepository) GetRecentMessages(userID string, limit int) ([]models.Message, error) {
 	var messages []models.Message
 	err := r.db.Preload("Sender").
-		Joins("JOIN message_threads ON messages.thread_id = message_threads.id").
+		Joins("JOIN message_threads ON messages.thread_id = message_threads.thread_id").
 		Where("(message_threads.user_a_id = ? OR message_threads.user_b_id = ?)", userID, userID).
 		Order("messages.created_at desc").Limit(limit).Find(&messages).Error
 	return messages, err

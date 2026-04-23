@@ -33,7 +33,7 @@ func (r *subscriptionRepository) GetAvailablePlans() ([]models.SubscriptionPlan,
 
 func (r *subscriptionRepository) GetPlanByID(planID string) (*models.SubscriptionPlan, error) {
 	var plan models.SubscriptionPlan
-	err := r.db.Where("id = ?", planID).First(&plan).Error
+	err := r.db.Where("plan_id = ?", planID).First(&plan).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil

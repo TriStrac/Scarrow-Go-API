@@ -49,7 +49,7 @@ func (r *deviceRepository) FindAll() ([]models.Device, error) {
 
 func (r *deviceRepository) FindByID(id string) (*models.Device, error) {
 	var device models.Device
-	err := r.db.Where("id = ?", id).First(&device).Error
+	err := r.db.Where("device_id = ?", id).First(&device).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -64,7 +64,7 @@ func (r *deviceRepository) UpdateDevice(device *models.Device) error {
 }
 
 func (r *deviceRepository) SoftDelete(id string) error {
-	return r.db.Model(&models.Device{}).Where("id = ?", id).Update("is_deleted", true).Delete(&models.Device{ID: id}).Error
+	return r.db.Model(&models.Device{}).Where("device_id = ?", id).Update("is_deleted", true).Delete(&models.Device{ID: id}).Error
 }
 
 func (r *deviceRepository) AddOwner(deviceOwner *models.DeviceOwner) error {
@@ -88,7 +88,7 @@ func (r *deviceRepository) GetOwnersByDeviceID(deviceID string) ([]models.Device
 func (r *deviceRepository) GetDevicesByOwner(ownerID, ownerType string) ([]models.Device, error) {
 	var devices []models.Device
 	err := r.db.Table("devices").
-		Joins("JOIN device_owners ON devices.id = device_owners.device_id").
+		Joins("JOIN device_owners ON devices.device_id = device_owners.device_id").
 		Where("device_owners.owner_id = ? AND device_owners.owner_type = ?", ownerID, ownerType).
 		Find(&devices).Error
 	return devices, err
@@ -100,7 +100,7 @@ func (r *deviceRepository) GetDevicesByOwnerIDs(ownerIDs []string) ([]models.Dev
 		return devices, nil
 	}
 	err := r.db.Table("devices").
-		Joins("JOIN device_owners ON devices.id = device_owners.device_id").
+		Joins("JOIN device_owners ON devices.device_id = device_owners.device_id").
 		Where("device_owners.owner_id IN ?", ownerIDs).
 		Find(&devices).Error
 	return devices, err

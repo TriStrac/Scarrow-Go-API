@@ -7,20 +7,20 @@ import (
 )
 
 type MessageThread struct {
-	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID        string         `gorm:"column:thread_id;type:varchar(36);primaryKey" json:"id"`
 	UserA_ID  string         `gorm:"type:varchar(36);not null;index" json:"user_a_id"`
 	UserB_ID  string         `gorm:"type:varchar(36);not null;index" json:"user_b_id"`
 	CreatedAt time.Time      `json:"created_at"`
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	UserA    *User     `gorm:"foreignKey:UserA_ID;references:ID" json:"user_a"`
-	UserB    *User     `gorm:"foreignKey:UserB_ID;references:ID" json:"user_b"`
-	Messages []Message `gorm:"foreignKey:ThreadID;references:ID" json:"messages,omitempty"`
+	UserA    *User     `gorm:"foreignKey:UserA_ID;references:UserID" json:"user_a"`
+	UserB    *User     `gorm:"foreignKey:UserB_ID;references:UserID" json:"user_b"`
+	Messages []Message `gorm:"foreignKey:ThreadID;references:ThreadID" json:"messages,omitempty"`
 }
 
 type Message struct {
-	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID        string         `gorm:"column:message_id;type:varchar(36);primaryKey" json:"id"`
 	ThreadID  string         `gorm:"type:varchar(36);not null;index" json:"thread_id"`
 	SenderID  string         `gorm:"type:varchar(36);not null" json:"sender_id"`
 	Content   string         `gorm:"type:text;not null" json:"content"`
@@ -28,6 +28,6 @@ type Message struct {
 	CreatedAt time.Time      `json:"created_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Thread *MessageThread `gorm:"foreignKey:ThreadID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
-	Sender *User          `gorm:"foreignKey:SenderID;references:ID" json:"sender"`
+	Thread *MessageThread `gorm:"foreignKey:ThreadID;references:ThreadID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	Sender *User          `gorm:"foreignKey:SenderID;references:UserID" json:"sender"`
 }

@@ -7,7 +7,7 @@ import (
 )
 
 type Notification struct {
-	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID        string         `gorm:"column:notification_id;type:varchar(36);primaryKey" json:"id"`
 	UserID    string         `gorm:"type:varchar(36);not null;index" json:"user_id"`
 	Title     string         `gorm:"type:varchar(255);not null" json:"title"`
 	Message   string         `gorm:"type:text;not null" json:"message"`
@@ -16,5 +16,5 @@ type Notification struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	User *User `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
+	User *User `gorm:"foreignKey:UserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 }

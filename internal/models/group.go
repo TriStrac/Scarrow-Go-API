@@ -7,7 +7,7 @@ import (
 )
 
 type Group struct {
-	ID        string         `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID        string         `gorm:"column:group_id;type:varchar(36);primaryKey" json:"id"`
 	Name      string         `gorm:"type:varchar(100);unique;not null" json:"name"`
 	OwnerID   string         `gorm:"type:varchar(36);not null;index" json:"owner_id"`
 	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`
@@ -15,6 +15,6 @@ type Group struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Owner   *User  `gorm:"foreignKey:OwnerID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"owner"`
-	Members []User `gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"members"`
+	Owner   *User  `gorm:"foreignKey:OwnerID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"owner"`
+	Members []User `gorm:"foreignKey:GroupID;references:GroupID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"members"`
 }

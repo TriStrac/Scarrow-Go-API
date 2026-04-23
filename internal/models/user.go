@@ -7,11 +7,11 @@ import (
 )
 
 type User struct {
-	ID                 string         `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID                 string         `gorm:"column:user_id;type:varchar(36);primaryKey" json:"id"`
 	Username           string         `gorm:"type:varchar(100);unique;index;not null" json:"username"`
 	Password           string         `gorm:"type:varchar(255);not null" json:"-"`
 	GroupID            *string        `gorm:"type:varchar(36);index" json:"group_id"`
-	Group              *Group         `gorm:"foreignKey:GroupID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
+	Group              *Group         `gorm:"foreignKey:GroupID;references:GroupID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
 	IsInGroup          bool           `gorm:"default:false" json:"is_user_in_group"`
 	IsHead             bool           `gorm:"default:false" json:"is_user_head"`
 	IsVerified         bool           `gorm:"default:false" json:"is_verified"`
@@ -21,12 +21,12 @@ type User struct {
 	UpdatedAt          time.Time      `json:"updated_at"`
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Profile *UserProfile `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"profile"`
-	Address *UserAddress `gorm:"foreignKey:UserID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"address"`
+	Profile *UserProfile `gorm:"foreignKey:UserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"profile"`
+	Address *UserAddress `gorm:"foreignKey:UserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"address"`
 }
 
 type UserProfile struct {
-	ID          string    `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID          string    `gorm:"column:profile_id;type:varchar(36);primaryKey" json:"id"`
 	UserID      string    `gorm:"type:varchar(36);not null;index" json:"user_id"`
 	FirstName   string    `gorm:"type:varchar(100)" json:"first_name"`
 	MiddleName  string    `gorm:"type:varchar(100)" json:"middle_name"`
@@ -36,7 +36,7 @@ type UserProfile struct {
 }
 
 type UserAddress struct {
-	ID         string `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID         string `gorm:"column:address_id;type:varchar(36);primaryKey" json:"id"`
 	UserID     string `gorm:"type:varchar(36);not null;index" json:"user_id"`
 	StreetName string `gorm:"type:varchar(255)" json:"street_name"`
 	Baranggay  string `gorm:"type:varchar(100)" json:"baranggay"`
@@ -46,7 +46,7 @@ type UserAddress struct {
 }
 
 type PushToken struct {
-	ID        string    `gorm:"type:varchar(36);primaryKey" json:"id"`
+	ID        string    `gorm:"column:token_id;type:varchar(36);primaryKey" json:"id"`
 	UserID    string    `gorm:"type:varchar(36);not null;index" json:"user_id"`
 	Token     string    `gorm:"type:varchar(255);not null;unique" json:"token"`
 	Platform  string    `gorm:"type:varchar(50)" json:"platform"` // e.g., 'android', 'ios', 'web'

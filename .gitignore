@@ -26,3 +26,6 @@ MIGRATION_GO_MYSQL.md
 .vscode/
 *.swp
 *.swo
+
+# Worktrees
+.worktrees/

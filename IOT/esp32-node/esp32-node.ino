@@ -1,12 +1,8 @@
 #include <Preferences.h>
 
 HardwareSerial UART1(1);
-HardwareSerial UART2(2);
 
 #define RADAR1_OT1 16
-#define RADAR2_OT1 13
-#define RADAR2_RX 12
-#define RADAR2_TX 10
 
 uint8_t openCfg[]  = {0xFD, 0xFC, 0xFB, 0xFA, 0x04, 0x00, 0xFF, 0x00, 0x01, 0x00, 0x04, 0x03, 0x02, 0x01};
 uint8_t setRunMode[] = {0xFD, 0xFC, 0xFB, 0xFA, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x04, 0x03, 0x02, 0x01};
@@ -18,7 +14,6 @@ String nodeSecret = "";
 String hubFilter = "";
 bool isMotionDetected = false;
 int lastDistanceCm = -1;
-int lastDistance2Cm = -1;
 
 void clearSerial() {
   while (UART1.available()) UART1.read();
@@ -39,42 +34,12 @@ bool sendCmd(const char* label, uint8_t* cmd, int len) {
   else { Serial.println("TIMEOUT"); return false; }
 }
 
-void clearSerial2() {
-  while (UART2.available()) UART2.read();
-}
-
-bool sendCmd2(const char* label, uint8_t* cmd, int len) {
-  clearSerial2();
-  Serial.print("[R2 "); Serial.print(label); Serial.print("] ");
-  UART2.write(cmd, len);
-  UART2.flush();
-  unsigned long start = millis();
-  uint8_t resp[64];
-  int idx = 0;
-  while (millis() - start < 300 && idx < 64) {
-    if (UART2.available()) resp[idx++] = UART2.read();
-  }
-  if (idx > 0) { Serial.println(" OK"); return true; }
-  else { Serial.println(" TIMEOUT"); return false; }
-}
-
 void parseDistance(String& data, int* lastDistanceCm, const char* label) {
   if (data.startsWith("Range")) {
     int idx = data.indexOf(' ');
     if (idx > 0) {
       *lastDistanceCm = data.substring(idx + 1).toInt();
       Serial.print(label); Serial.print(*lastDistanceCm); Serial.println(" cm");
-    }
-  }
-}
-
-void processRadar2() {
-  if (UART2.available()) {
-    String data = UART2.readStringUntil('\n');
-    data.trim();
-    if (data.length() > 0) {
-      Serial.print("[R2] "); Serial.println(data);
-      parseDistance(data, &lastDistance2Cm, "Distance2: ");
     }
   }
 }
@@ -99,17 +64,13 @@ void setup() {
 
   Serial.println("[DEBUG] 4: past setup mode check");
   pinMode(RADAR1_OT1, INPUT);
-  pinMode(RADAR2_OT1, INPUT);
   Serial.println("[DEBUG] 5: pinMode done");
 
-  UART1.begin(115200, SERIAL_8N1, 17, 16);
+  UART1.begin(115200, SERIAL_8N1, 18, 19);
   Serial.println("[DEBUG] 6: UART1 begin done");
 
-  UART2.begin(115200, SERIAL_8N1, RADAR2_RX, RADAR2_TX);
-  Serial.println("[DEBUG] 7: UART2 begin done");
-
   delay(2000);
-  Serial.println("\n🚀 Scarrow Node - FIELD MODE");
+  Serial.println("\n🚀 Scarrow Node - RADAR 1 ONLY TEST");
 
   sendCmd("Open", openCfg, sizeof(openCfg));
   delay(100);
@@ -117,32 +78,20 @@ void setup() {
   delay(100);
   sendCmd("Close", closeCfg, sizeof(closeCfg));
 
-  sendCmd2("Open", openCfg, sizeof(openCfg));
-  delay(100);
-  sendCmd2("Mode", setRunMode, sizeof(setRunMode));
-  delay(100);
-  sendCmd2("Close", closeCfg, sizeof(closeCfg));
-  Serial.println("Radar 2 config sent");
-
-  Serial.println("\n--- Radars Active ---");
+  Serial.println("\n--- Radar 1 Active ---");
 }
 
 void loop() {
   int r1 = digitalRead(RADAR1_OT1);
-  int r2 = digitalRead(RADAR2_OT1);
 
-  static int lastR1 = -1, lastR2 = -1;
+  static int lastR1 = -1;
 
   if (r1 != lastR1) {
     Serial.print("[R1 OT1] "); Serial.println(r1 ? "HIGH" : "LOW");
     lastR1 = r1;
   }
-  if (r2 != lastR2) {
-    Serial.print("[R2 OT1] "); Serial.println(r2 ? "HIGH" : "LOW");
-    lastR2 = r2;
-  }
 
-  if (r1 == HIGH || r2 == HIGH) {
+  if (r1 == HIGH) {
     if (!isMotionDetected) {
       Serial.println("MOTION DETECTED");
       isMotionDetected = true;
@@ -162,6 +111,4 @@ void loop() {
       parseDistance(data, &lastDistanceCm, "Distance: ");
     }
   }
-
-  processRadar2();
 }

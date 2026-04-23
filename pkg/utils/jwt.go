@@ -17,7 +17,7 @@ func GenerateToken(userID string) (string, error) {
 
 	claims := jwt.MapClaims{
 		"user_id": userID,
-		"exp":     time.Now().Add(time.Hour * 72).Unix(), // 3 days expiration
+		"exp":     time.Now().Add(time.Hour * 24 * 30).Unix(), // 30 days expiration
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

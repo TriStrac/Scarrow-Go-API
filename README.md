@@ -186,7 +186,12 @@ Authorization: Bearer <your_jwt_token_here>
 
 ### 1. Create a Group (🔒 Protected)
 `POST /api/groups/`
-`{ "name": "My Farm Co" }`
+
+**Request Payload:**
+```json
+{ "name": "My Farm Co" }
+```
+*Note: The user who creates the group is automatically assigned as the `HEAD` of the newly created group.*
 
 ### 2. Get Group Details (🔒 Protected)
 `GET /api/groups/:groupId`
@@ -246,7 +251,11 @@ Authorization: Bearer <your_jwt_token_here>
 
 ### 6. Remove Member (Admin only) (🔒 Protected)
 `DELETE /api/groups/member`
-`{ "group_id": "...", "user_id": "..." }`
+
+**Request Payload:**
+```json
+{ "group_id": "...", "user_id": "..." }
+```
 
 ### 7. Leave Group (Members only) (🔒 Protected)
 `POST /api/groups/leave`
@@ -254,6 +263,18 @@ Authorization: Bearer <your_jwt_token_here>
 **Request Payload:**
 ```json
 { "group_id": "..." }
+```
+
+### 8. Disband Group (Owner only) (🔒 Protected)
+`DELETE /api/groups/:groupId`
+
+**Description:** Disbands the entire group. This resets all former members to `SOLO` status, unpairs any devices owned by the group, deletes pending invitations, and fires a "Group Disbanded" notification to all previous members.
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Group disbanded successfully"
+}
 ```
 
 ---

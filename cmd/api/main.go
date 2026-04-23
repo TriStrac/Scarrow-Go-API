@@ -49,7 +49,7 @@ func main() {
 	groupService := service.NewGroupService(groupRepo, userRepo, deviceRepo, notificationService, invitationRepo)
 	deviceService := service.NewDeviceService(deviceRepo, userRepo)
 	activityLogService := service.NewActivityLogService(activityLogRepo)
-	messageService := service.NewMessageService(messageRepo, userRepo)
+	messageService := service.NewMessageService(messageRepo, userRepo, groupRepo)
 	reportService := service.NewReportService(deviceRepo, userRepo)
 	subService := service.NewSubscriptionService(subRepo, userRepo)
 

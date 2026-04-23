@@ -17,12 +17,13 @@ type MessageService interface {
 }
 
 type messageService struct {
-	repo     repository.MessageRepository
-	userRepo repository.UserRepository
+	repo      repository.MessageRepository
+	userRepo  repository.UserRepository
+	groupRepo repository.GroupRepository
 }
 
-func NewMessageService(repo repository.MessageRepository, userRepo repository.UserRepository) MessageService {
-	return &messageService{repo: repo, userRepo: userRepo}
+func NewMessageService(repo repository.MessageRepository, userRepo repository.UserRepository, groupRepo repository.GroupRepository) MessageService {
+	return &messageService{repo: repo, userRepo: userRepo, groupRepo: groupRepo}
 }
 
 func (s *messageService) SendMessage(senderID, receiverID, content string) (*models.Message, error) {
@@ -30,8 +31,55 @@ func (s *messageService) SendMessage(senderID, receiverID, content string) (*mod
 		return nil, errors.New("cannot send message to yourself")
 	}
 
+	// Validate sender and enforce organization restriction
+	sender, err := s.userRepo.FindByID(senderID)
+	if err != nil {
+		return nil, err
+	}
+	if sender == nil {
+		return nil, errors.New("sender not found")
+	}
+	if sender.GroupID == nil || *sender.GroupID == "" {
+		return nil, errors.New("messaging is only available for organization members")
+	}
+
+	// Resolve the receiver (Handle frontend bug where display name is passed instead of ID)
+	members, err := s.groupRepo.FindMembersByGroupID(*sender.GroupID)
+	if err != nil {
+		return nil, errors.New("failed to retrieve organization members")
+	}
+
+	var actualReceiverID string
+	for _, member := range members {
+		if member.ID == receiverID {
+			actualReceiverID = member.ID
+			break
+		}
+		if member.Username == receiverID {
+			actualReceiverID = member.ID
+			break
+		}
+		
+		displayName := member.Username
+		if member.Profile != nil && member.Profile.FirstName != "" {
+			displayName = member.Profile.FirstName + " " + member.Profile.LastName
+		}
+		if displayName == receiverID {
+			actualReceiverID = member.ID
+			break
+		}
+	}
+
+	if actualReceiverID == "" {
+		return nil, errors.New("receiver not found in your organization")
+	}
+
+	if senderID == actualReceiverID {
+		return nil, errors.New("cannot send message to yourself")
+	}
+
 	// 1. Find or create thread
-	thread, err := s.repo.FindThreadByParticipants(senderID, receiverID)
+	thread, err := s.repo.FindThreadByParticipants(senderID, actualReceiverID)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +88,7 @@ func (s *messageService) SendMessage(senderID, receiverID, content string) (*mod
 		thread = &models.MessageThread{
 			ID:       uuid.New().String(),
 			UserA_ID: senderID,
-			UserB_ID: receiverID,
+			UserB_ID: actualReceiverID,
 		}
 		if err := s.repo.CreateThread(thread); err != nil {
 			return nil, err

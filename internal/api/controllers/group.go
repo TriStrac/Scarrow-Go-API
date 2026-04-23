@@ -134,7 +134,7 @@ func (c *GroupController) UpdateGroup(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Group updated successfully"})
 }
 
-func (c *GroupController) SoftDeleteGroup(ctx *gin.Context) {
+func (c *GroupController) DisbandGroup(ctx *gin.Context) {
 	groupID := ctx.Param("groupId")
 	callerID, exists := ctx.Get("userID")
 	if !exists {
@@ -154,12 +154,12 @@ func (c *GroupController) SoftDeleteGroup(ctx *gin.Context) {
 		return
 	}
 
-	err = c.groupService.SoftDeleteGroup(groupID)
+	err = c.groupService.DisbandGroup(groupID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	ctx.JSON(http.StatusOK, gin.H{"message": "Group deleted successfully"})
+	ctx.JSON(http.StatusOK, gin.H{"message": "Group disbanded successfully"})
 }
 
 func (c *GroupController) AddMember(ctx *gin.Context) {

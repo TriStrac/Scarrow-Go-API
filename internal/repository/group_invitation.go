@@ -13,6 +13,7 @@ type GroupInvitationRepository interface {
 	FindByCode(code string) (*models.GroupInvitation, error)
 	DeleteByCode(code string) error
 	DeleteExpired() error
+	DeleteByGroupID(groupID string) error
 }
 
 type groupInvitationRepository struct {
@@ -45,4 +46,8 @@ func (r *groupInvitationRepository) DeleteByCode(code string) error {
 
 func (r *groupInvitationRepository) DeleteExpired() error {
 	return r.db.Where("expires_at < ?", time.Now()).Delete(&models.GroupInvitation{}).Error
+}
+
+func (r *groupInvitationRepository) DeleteByGroupID(groupID string) error {
+	return r.db.Where("group_id = ?", groupID).Delete(&models.GroupInvitation{}).Error
 }

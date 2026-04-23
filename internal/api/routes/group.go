@@ -18,7 +18,7 @@ func SetupGroupRoutes(router *gin.RouterGroup, groupController *controllers.Grou
 		groupRoutes.GET("/owner", groupController.GetGroupsByOwner)
 		groupRoutes.GET("/:groupId", groupController.GetGroupByID)
 		groupRoutes.PATCH("/:groupId", groupController.UpdateGroup)
-		groupRoutes.PATCH("/:groupId/softDelete", groupController.SoftDeleteGroup)
+		groupRoutes.DELETE("/:groupId", groupController.DisbandGroup)
 		groupRoutes.POST("/member", groupController.AddMember)
 		groupRoutes.DELETE("/member", groupController.RemoveMember)
 		groupRoutes.POST("/leave", groupController.LeaveGroup)

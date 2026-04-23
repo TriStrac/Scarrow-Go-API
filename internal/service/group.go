@@ -17,7 +17,7 @@ type GroupService interface {
 	GetGroupsByOwner(ownerID string) ([]models.Group, error)
 	GetGroupByID(id string) (*models.Group, error)
 	UpdateGroup(id string, name string) error
-	SoftDeleteGroup(id string) error
+	DisbandGroup(id string) error
 	AddMemberByUsername(groupID, username string) error
 	RemoveMember(groupID, userID string) error
 	GetGroupMembers(groupID string) ([]MemberResponse, error)
@@ -69,6 +69,15 @@ func NewGroupService(
 }
 
 func (s *groupService) CreateGroup(name, ownerID string) (*models.Group, error) {
+	// 1. Check if user is already in a group (Company logic: strict 1-to-many)
+	user, err := s.userRepo.FindByID(ownerID)
+	if err != nil {
+		return nil, err
+	}
+	if user.GroupID != nil && *user.GroupID != "" {
+		return nil, errors.New("user already belongs to a group/company, cannot create another")
+	}
+
 	exists, err := s.groupRepo.GroupNameExists(name)
 	if err != nil {
 		return nil, err
@@ -87,6 +96,13 @@ func (s *groupService) CreateGroup(name, ownerID string) (*models.Group, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	// Make the owner the head of this newly created group
+	user.GroupID = &group.ID
+	user.IsHead = true
+	user.IsInGroup = true
+	_ = s.userRepo.UpdateUser(user)
+
 	return group, nil
 }
 
@@ -168,7 +184,7 @@ func (s *groupService) UpdateGroup(id string, name string) error {
 	return s.groupRepo.UpdateGroup(group)
 }
 
-func (s *groupService) SoftDeleteGroup(id string) error {
+func (s *groupService) DisbandGroup(id string) error {
 	group, err := s.groupRepo.FindByID(id)
 	if err != nil {
 		return err
@@ -191,7 +207,10 @@ func (s *groupService) SoftDeleteGroup(id string) error {
 	// 3. Unpair all devices owned by this group
 	_ = s.deviceRepo.RemoveAllOwnersByOwner(id, "GROUP")
 
-	// 4. Soft delete the group
+	// 4. Invalidate/Delete all pending invitations for this group
+	_ = s.invitationRepo.DeleteByGroupID(id)
+
+	// 5. Soft delete the group
 	return s.groupRepo.SoftDelete(id)
 }
 

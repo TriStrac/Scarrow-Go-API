@@ -279,7 +279,7 @@ Authorization: Bearer <your_jwt_token_here>
 
 ---
 
-## 📱 Devices Module (`/api/device`)
+## Devices Module (`/api/device`)
 
 ### Phase 2: Hardware Provisioning (BLE "Zero-Router" Setup)
 
@@ -353,6 +353,48 @@ Authorization: Bearer <your_jwt_token_here>
 `GET /api/device/:deviceId/logs?limit=50&offset=0`
 
 **Returns paginated telemetry history.**
+
+---
+
+### IoT Device Log Ingestion (Hub-to-API)
+
+For Raspberry Pi hubs sending logs from ESP32 nodes. Uses device authentication instead of user JWT.
+
+### 6. Create Device Log (IoT Device Auth 🔐)
+`POST /api/device/:deviceId/logs`
+
+**Authentication:** Uses `X-Device-ID` and `X-Device-Secret` headers (NOT user JWT).
+
+**Request Headers:**
+```http
+X-Device-ID: HUB-XXXX-YYYY
+X-Device-Secret: <hub_secret_from_registration>
+Content-Type: application/json
+```
+
+**Request Payload:**
+```json
+{
+  "node_id": "NODE-ZZZZ-WWWW",
+  "log_type": "DETECTED",
+  "pest_type": "BIRD",
+  "duration_seconds": 30,
+  "frequency_hz": 0.0,
+  "payload": "{}"
+}
+```
+
+**Success Response (201 Created):**
+```json
+{
+  "message": "Log created successfully"
+}
+```
+
+**Error Responses:**
+- `401`: Authentication failed (invalid device ID or secret)
+- `403`: Node does not belong to this hub
+- `404`: Device not found
 
 ---
 

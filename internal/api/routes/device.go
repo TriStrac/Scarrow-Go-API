@@ -32,11 +32,6 @@ func RegisterDeviceRoutes(router *gin.RouterGroup, deviceController *controllers
 		deviceRoutes.PATCH("/:deviceId", deviceController.UpdateDevice)
 		deviceRoutes.DELETE("/:deviceId", deviceController.SoftDeleteDevice)
 
-		// Ownership
-		deviceRoutes.POST("/:deviceId/owner", deviceController.AddOwner)
-		deviceRoutes.DELETE("/:deviceId/owner", deviceController.RemoveOwner)
-		deviceRoutes.GET("/:deviceId/owners", deviceController.GetOwners)
-
 		// Logs
 		deviceRoutes.POST("/:deviceId/logs", deviceController.CreateLog)
 		deviceRoutes.GET("/:deviceId/logs", deviceController.GetLogs)

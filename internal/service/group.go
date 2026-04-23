@@ -204,13 +204,10 @@ func (s *groupService) DisbandGroup(id string) error {
 	// 2. Clear members from group
 	_ = s.groupRepo.ClearGroupMembers(id)
 
-	// 3. Unpair all devices owned by this group
-	_ = s.deviceRepo.RemoveAllOwnersByOwner(id, "GROUP")
-
-	// 4. Invalidate/Delete all pending invitations for this group
+	// 3. Invalidate/Delete all pending invitations for this group
 	_ = s.invitationRepo.DeleteByGroupID(id)
 
-	// 5. Soft delete the group
+	// 4. Soft delete the group
 	return s.groupRepo.SoftDelete(id)
 }
 

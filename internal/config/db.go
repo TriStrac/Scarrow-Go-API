@@ -62,7 +62,6 @@ func InitDB() {
 		&models.SubscriptionPlan{},
 		&models.UserSubscription{},
 		&models.Device{},
-		&models.DeviceOwner{},
 		&models.DeviceLog{},
 		&models.UserActivityLog{},
 		&models.OTPCode{},

@@ -16,6 +16,7 @@ const (
 type Device struct {
 	ID        string         `gorm:"column:device_id;type:varchar(36);primaryKey" json:"id"`
 	Name      string         `gorm:"type:varchar(100);not null" json:"name"`
+	UserID    string         `gorm:"type:varchar(36);not null;index" json:"owner_id"`
 	Type      DeviceType     `gorm:"type:varchar(20);not null;default:'CENTRAL'" json:"device_type"`
 	ParentID  *string        `gorm:"type:varchar(36);index" json:"parent_id"`
 	Status    string         `gorm:"type:varchar(50);default:'OFFLINE'" json:"status"`
@@ -28,14 +29,9 @@ type Device struct {
 	IsDeleted bool           `gorm:"default:false" json:"is_deleted"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
+	User   *User    `gorm:"foreignKey:UserID;references:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"-"`
 	Parent *Device  `gorm:"foreignKey:ParentID;references:DeviceID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL;" json:"-"`
 	Nodes  []Device `gorm:"foreignKey:ParentID;references:DeviceID" json:"nodes,omitempty"`
-}
-
-type DeviceOwner struct {
-	DeviceID  string `gorm:"type:varchar(36);primaryKey" json:"device_id"`
-	OwnerID   string `gorm:"type:varchar(36);primaryKey" json:"owner_id"`
-	OwnerType string `gorm:"type:varchar(20);primaryKey" json:"owner_type"` // 'USER' or 'GROUP'
 }
 
 type DeviceLog struct {

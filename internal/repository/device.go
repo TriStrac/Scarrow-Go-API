@@ -15,13 +15,9 @@ type DeviceRepository interface {
 	SoftDelete(id string) error
 
 	// Ownership
-	AddOwner(deviceOwner *models.DeviceOwner) error
-	RemoveOwner(deviceID, ownerID, ownerType string) error
-	RemoveAllOwnersByOwner(ownerID, ownerType string) error
-	GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwner, error)
-	GetDevicesByOwner(ownerID, ownerType string) ([]models.Device, error)
-	GetDevicesByOwnerIDs(ownerIDs []string) ([]models.Device, error)
-	IsOwner(deviceID string, ownerIDs []string) (bool, error)
+	GetDevicesByUserID(userID string) ([]models.Device, error)
+	GetDevicesByUserIDs(userIDs []string) ([]models.Device, error)
+	IsOwner(deviceID string, userID string) (bool, error)
 	UnpairNodesByParent(parentID string) error
 
 	// Logging
@@ -67,51 +63,24 @@ func (r *deviceRepository) SoftDelete(id string) error {
 	return r.db.Model(&models.Device{}).Where("device_id = ?", id).Update("is_deleted", true).Delete(&models.Device{ID: id}).Error
 }
 
-func (r *deviceRepository) AddOwner(deviceOwner *models.DeviceOwner) error {
-	return r.db.Create(deviceOwner).Error
-}
-
-func (r *deviceRepository) RemoveOwner(deviceID, ownerID, ownerType string) error {
-	return r.db.Where("device_id = ? AND owner_id = ? AND owner_type = ?", deviceID, ownerID, ownerType).Delete(&models.DeviceOwner{}).Error
-}
-
-func (r *deviceRepository) RemoveAllOwnersByOwner(ownerID, ownerType string) error {
-	return r.db.Where("owner_id = ? AND owner_type = ?", ownerID, ownerType).Delete(&models.DeviceOwner{}).Error
-}
-
-func (r *deviceRepository) GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwner, error) {
-	var owners []models.DeviceOwner
-	err := r.db.Where("device_id = ?", deviceID).Find(&owners).Error
-	return owners, err
-}
-
-func (r *deviceRepository) GetDevicesByOwner(ownerID, ownerType string) ([]models.Device, error) {
+func (r *deviceRepository) GetDevicesByUserID(userID string) ([]models.Device, error) {
 	var devices []models.Device
-	err := r.db.Table("devices").
-		Joins("JOIN device_owners ON devices.device_id = device_owners.device_id").
-		Where("device_owners.owner_id = ? AND device_owners.owner_type = ?", ownerID, ownerType).
-		Find(&devices).Error
+	err := r.db.Where("user_id = ?", userID).Find(&devices).Error
 	return devices, err
 }
 
-func (r *deviceRepository) GetDevicesByOwnerIDs(ownerIDs []string) ([]models.Device, error) {
+func (r *deviceRepository) GetDevicesByUserIDs(userIDs []string) ([]models.Device, error) {
 	var devices []models.Device
-	if len(ownerIDs) == 0 {
+	if len(userIDs) == 0 {
 		return devices, nil
 	}
-	err := r.db.Table("devices").
-		Joins("JOIN device_owners ON devices.device_id = device_owners.device_id").
-		Where("device_owners.owner_id IN ?", ownerIDs).
-		Find(&devices).Error
+	err := r.db.Where("user_id IN ?", userIDs).Find(&devices).Error
 	return devices, err
 }
 
-func (r *deviceRepository) IsOwner(deviceID string, ownerIDs []string) (bool, error) {
-	if len(ownerIDs) == 0 {
-		return false, nil
-	}
+func (r *deviceRepository) IsOwner(deviceID string, userID string) (bool, error) {
 	var count int64
-	err := r.db.Model(&models.DeviceOwner{}).Where("device_id = ? AND owner_id IN ?", deviceID, ownerIDs).Count(&count).Error
+	err := r.db.Model(&models.Device{}).Where("device_id = ? AND user_id = ?", deviceID, userID).Count(&count).Error
 	return count > 0, err
 }
 

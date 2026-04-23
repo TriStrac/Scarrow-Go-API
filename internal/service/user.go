@@ -167,11 +167,7 @@ func (s *userService) GetUserFullProfile(id string) (*UserFullResponse, error) {
 	}
 
 	// Fetch Devices
-	ownerIDs := []string{user.ID}
-	if user.GroupID != nil {
-		ownerIDs = append(ownerIDs, *user.GroupID)
-	}
-	devices, _ := s.deviceRepo.GetDevicesByOwnerIDs(ownerIDs)
+	devices, _ := s.deviceRepo.GetDevicesByUserID(user.ID)
 
 	// Fetch Recent Messages
 	recentMessages, _ := s.messageRepo.GetRecentMessages(user.ID, 5)
@@ -310,14 +306,10 @@ func (s *userService) ChangePassword(id, newPassword string) error {
 }
 
 func (s *userService) SoftDelete(id string) error {
-	// Unpair all devices owned by this user
-	_ = s.deviceRepo.RemoveAllOwnersByOwner(id, "USER")
 	return s.repo.SoftDelete(id)
 }
 
 func (s *userService) HardDelete(id string) error {
-	// Unpair all devices owned by this user
-	_ = s.deviceRepo.RemoveAllOwnersByOwner(id, "USER")
 	return s.repo.HardDelete(id)
 }
 

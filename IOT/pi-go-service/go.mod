@@ -1,6 +1,6 @@
 module pi-go-service
 
-go 1.26.1
+go 1.23
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.42

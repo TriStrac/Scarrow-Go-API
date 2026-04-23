@@ -21,24 +21,13 @@ func NewReportService(deviceRepo repository.DeviceRepository, userRepo repositor
 }
 
 func (s *reportService) GetSummary(userID, timeframe string) (map[string]interface{}, error) {
-	// 1. Resolve ownership context (User + Group)
-	user, err := s.userRepo.FindByID(userID)
+	// 1. Fetch user's devices
+	devices, err := s.deviceRepo.GetDevicesByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	ownerIDs := []string{userID}
-	if user != nil && user.GroupID != nil {
-		ownerIDs = append(ownerIDs, *user.GroupID)
-	}
-
-	// 2. Fetch accessible devices
-	devices, err := s.deviceRepo.GetDevicesByOwnerIDs(ownerIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	// 3. (Mock Logic) Aggregate Logs across accessible devices
+	// 2. (Mock Logic) Aggregate Logs across accessible devices
 	// In a real scenario, you'd execute a complex GROUP BY query in the repository.
 	// For now, we return a structured skeleton that matches what a frontend chart would expect.
 

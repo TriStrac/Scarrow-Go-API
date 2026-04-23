@@ -10,7 +10,7 @@ import (
 )
 
 type DeviceService interface {
-	CreateDevice(name string, userID string, ownerType string, deviceType models.DeviceType, parentID *string) (*models.Device, error)
+	CreateDevice(name string, userID string, deviceType models.DeviceType, parentID *string) (*models.Device, error)
 	RegisterHub(name string, userID string, lat, lng *float64) (*models.Device, error)
 	RegisterNode(name string, userID string, hubID string, nodeType string) (*models.Device, error)
 	GetAllDevices() ([]models.Device, error)
@@ -19,9 +19,6 @@ type DeviceService interface {
 	SoftDelete(id string) error
 
 	// Ownership
-	AddOwner(deviceID, ownerID, ownerType string) error
-	RemoveOwner(deviceID, ownerID, ownerType string) error
-	GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwner, error)
 	GetMyDevices(userID string) ([]models.Device, error)
 	IsOwner(deviceID, userID string) (bool, error)
 
@@ -42,27 +39,11 @@ func NewDeviceService(repo repository.DeviceRepository, userRepo repository.User
 	}
 }
 
-func (s *deviceService) CreateDevice(name string, userID string, ownerType string, deviceType models.DeviceType, parentID *string) (*models.Device, error) {
-	// Determine the actual owner ID based on ownerType
-	actualOwnerID := userID
-
-	if ownerType == "GROUP" {
-		user, err := s.userRepo.FindByID(userID)
-		if err != nil {
-			return nil, err
-		}
-		if user == nil {
-			return nil, errors.New("user not found")
-		}
-		if user.GroupID == nil {
-			return nil, errors.New("user does not belong to a group")
-		}
-		actualOwnerID = *user.GroupID
-	}
-
+func (s *deviceService) CreateDevice(name string, userID string, deviceType models.DeviceType, parentID *string) (*models.Device, error) {
 	device := &models.Device{
 		ID:       uuid.New().String(),
 		Name:     name,
+		UserID:   userID,
 		Type:     deviceType,
 		ParentID: parentID,
 		Status:   "OFFLINE",
@@ -73,19 +54,6 @@ func (s *deviceService) CreateDevice(name string, userID string, ownerType strin
 		return nil, err
 	}
 
-	// Add initial owner
-	owner := &models.DeviceOwner{
-		DeviceID:  device.ID,
-		OwnerID:   actualOwnerID,
-		OwnerType: ownerType,
-	}
-
-	err = s.repo.AddOwner(owner)
-	if err != nil {
-		// Rollback device creation if owner add fails
-		return nil, err
-	}
-
 	return device, nil
 }
 
@@ -93,6 +61,7 @@ func (s *deviceService) RegisterHub(name string, userID string, lat, lng *float6
 	device := &models.Device{
 		ID:       utils.GenerateDeviceID("HUB"),
 		Name:     name,
+		UserID:   userID,
 		Type:     models.DeviceTypeCentral,
 		Status:   "active",
 		Secret:   utils.GenerateSecret(32),
@@ -101,17 +70,6 @@ func (s *deviceService) RegisterHub(name string, userID string, lat, lng *float6
 	}
 
 	err := s.repo.CreateDevice(device)
-	if err != nil {
-		return nil, err
-	}
-
-	owner := &models.DeviceOwner{
-		DeviceID:  device.ID,
-		OwnerID:   userID,
-		OwnerType: "USER", // Defaulting to user, could be group depending on logic
-	}
-
-	err = s.repo.AddOwner(owner)
 	if err != nil {
 		return nil, err
 	}
@@ -136,6 +94,7 @@ func (s *deviceService) RegisterNode(name string, userID string, hubID string, n
 	device := &models.Device{
 		ID:       utils.GenerateDeviceID("NODE"),
 		Name:     name,
+		UserID:   userID,
 		Type:     models.DeviceTypeNode,
 		Status:   "active",
 		Secret:   utils.GenerateSecret(32),
@@ -144,17 +103,6 @@ func (s *deviceService) RegisterNode(name string, userID string, hubID string, n
 	}
 
 	err = s.repo.CreateDevice(device)
-	if err != nil {
-		return nil, err
-	}
-
-	owner := &models.DeviceOwner{
-		DeviceID:  device.ID,
-		OwnerID:   userID,
-		OwnerType: "USER",
-	}
-
-	err = s.repo.AddOwner(owner)
 	if err != nil {
 		return nil, err
 	}
@@ -202,49 +150,12 @@ func (s *deviceService) SoftDelete(id string) error {
 	return s.repo.SoftDelete(id)
 }
 
-func (s *deviceService) AddOwner(deviceID, ownerID, ownerType string) error {
-	owner := &models.DeviceOwner{
-		DeviceID:  deviceID,
-		OwnerID:   ownerID,
-		OwnerType: ownerType,
-	}
-	return s.repo.AddOwner(owner)
-}
-
-func (s *deviceService) RemoveOwner(deviceID, ownerID, ownerType string) error {
-	return s.repo.RemoveOwner(deviceID, ownerID, ownerType)
-}
-
-func (s *deviceService) GetOwnersByDeviceID(deviceID string) ([]models.DeviceOwner, error) {
-	return s.repo.GetOwnersByDeviceID(deviceID)
-}
-
 func (s *deviceService) GetMyDevices(userID string) ([]models.Device, error) {
-	user, err := s.userRepo.FindByID(userID)
-	if err != nil {
-		return nil, err
-	}
-
-	ownerIDs := []string{userID}
-	if user != nil && user.GroupID != nil {
-		ownerIDs = append(ownerIDs, *user.GroupID)
-	}
-
-	return s.repo.GetDevicesByOwnerIDs(ownerIDs)
+	return s.repo.GetDevicesByUserID(userID)
 }
 
 func (s *deviceService) IsOwner(deviceID, userID string) (bool, error) {
-	user, err := s.userRepo.FindByID(userID)
-	if err != nil {
-		return false, err
-	}
-
-	ownerIDs := []string{userID}
-	if user != nil && user.GroupID != nil {
-		ownerIDs = append(ownerIDs, *user.GroupID)
-	}
-
-	return s.repo.IsOwner(deviceID, ownerIDs)
+	return s.repo.IsOwner(deviceID, userID)
 }
 
 func (s *deviceService) CreateLog(deviceID, logType, payload, pestType string, freq float64, duration int) error {

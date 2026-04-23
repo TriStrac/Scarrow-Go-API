@@ -1,24 +1,23 @@
 # Database Schema: `scarrow_db` (Refined)
 
-This document outlines the professional table structures for the Scarrow-Go-API, featuring explicitly named primary keys.
+This document outlines the professional table structures for the Scarrow-Go-API, featuring explicitly named primary keys and a simplified user-device ownership model.
 
 ## Table of Contents
 1. [device_logs](#device_logs)
-2. [device_owners](#device_owners)
-3. [devices](#devices)
-4. [group_invitations](#group_invitations)
-5. [groups](#groups)
-6. [message_threads](#message_threads)
-7. [messages](#messages)
-8. [notifications](#notifications)
-9. [otp_codes](#otp_codes)
-10. [push_tokens](#push_tokens)
-11. [subscription_plans](#subscription_plans)
-12. [user_activity_logs](#user_activity_logs)
-13. [user_addresses](#user_addresses)
-14. [user_profiles](#user_profiles)
-15. [user_subscriptions](#user_subscriptions)
-16. [users](#users)
+2. [devices](#devices)
+3. [group_invitations](#group_invitations)
+4. [groups](#groups)
+5. [message_threads](#message_threads)
+6. [messages](#messages)
+7. [notifications](#notifications)
+8. [otp_codes](#otp_codes)
+9. [push_tokens](#push_tokens)
+10. [subscription_plans](#subscription_plans)
+11. [user_activity_logs](#user_activity_logs)
+12. [user_addresses](#user_addresses)
+13. [user_profiles](#user_profiles)
+14. [user_subscriptions](#user_subscriptions)
+15. [users](#users)
 
 ---
 
@@ -34,18 +33,12 @@ This document outlines the professional table structures for the Scarrow-Go-API,
 | `payload` | text | YES | NULL | |
 | `created_at` | datetime(3) | YES | NULL | |
 
-### `device_owners`
-| Column | Type | Nullable | Default | Extra / Key |
-| :--- | :--- | :--- | :--- | :--- |
-| `device_id` | varchar(36) | NO | NULL | PK |
-| `owner_id` | varchar(36) | NO | NULL | PK |
-| `owner_type` | varchar(20) | NO | NULL | PK |
-
 ### `devices`
 | Column | Type | Nullable | Default | Extra / Key |
 | :--- | :--- | :--- | :--- | :--- |
 | `device_id` | varchar(36) | NO | NULL | PK |
 | `name` | varchar(100) | NO | NULL | |
+| `user_id` | varchar(36) | NO | NULL | INDEX (FK to users) |
 | `type` | varchar(20) | NO | 'CENTRAL' | |
 | `parent_id` | varchar(36) | YES | NULL | INDEX |
 | `status` | varchar(50) | YES | 'OFFLINE' | |

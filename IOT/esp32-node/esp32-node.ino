@@ -4,8 +4,7 @@
 #include <BLE2902.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
-#include <soc/timer_group_struct.h>
-#include <soc/timer_group_reg.h>
+#include <esp_system.h>
 
 HardwareSerial UART1(1);
 HardwareSerial UART2(2);
@@ -136,9 +135,7 @@ void processRadar2() {
 }
 
 void setup() {
-  TIMERG1.wdtwprotect = TIMG_WDT_WKEY_V;
-  TIMERG1.wdtconfig0 = 0;
-  TIMERG1.wdtwprotect = 0;
+  disableCore1WDT();
 
   Serial.begin(115200);
   Serial.println("[DEBUG] 1: Serial done");

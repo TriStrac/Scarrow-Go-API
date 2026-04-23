@@ -136,9 +136,8 @@ void processRadar2() {
 }
 
 void setup() {
-  TIMERG1.wdtwprotect = TIMG_WDT_WKEY_VALUE;
-  TIMERG1.wdtfeed = 1;
-  TIMERG1.wdtconfig0.en = 0;
+  TIMERG1.wdtwprotect = TIMG_WDT_WKEY_V;
+  TIMERG1.wdtconfig0 = 0;
   TIMERG1.wdtwprotect = 0;
 
   Serial.begin(115200);

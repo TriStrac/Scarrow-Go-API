@@ -23,7 +23,7 @@ type DeviceService interface {
 	IsOwner(deviceID, userID string) (bool, error)
 
 	// Logging
-	CreateLog(deviceID, logType, payload, pestType string, freq float64, duration int) error
+CreateLog(deviceID, nodeID, logType, payload, pestType string, freq float64, duration int) error
 	GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error)
 }
 
@@ -158,10 +158,15 @@ func (s *deviceService) IsOwner(deviceID, userID string) (bool, error) {
 	return s.repo.IsOwner(deviceID, userID)
 }
 
-func (s *deviceService) CreateLog(deviceID, logType, payload, pestType string, freq float64, duration int) error {
+func (s *deviceService) CreateLog(deviceID, nodeID, logType, payload, pestType string, freq float64, duration int) error {
+	targetDeviceID := deviceID
+	if nodeID != "" {
+		targetDeviceID = nodeID
+	}
+
 	log := &models.DeviceLog{
-		ID:              uuid.New().String(),
-		DeviceID:        deviceID,
+		ID:                uuid.New().String(),
+		DeviceID:          targetDeviceID,
 		LogType:         logType,
 		Payload:         payload,
 		PestType:        pestType,

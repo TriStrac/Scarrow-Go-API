@@ -229,7 +229,7 @@ func (c *DeviceController) CreateLog(ctx *gin.Context) {
 		return
 	}
 
-	err = c.deviceService.CreateLog(deviceID, req.LogType, req.Payload, req.PestType, req.FrequencyHz, req.DurationSeconds)
+	err = c.deviceService.CreateLog(deviceID, req.NodeID, req.LogType, req.Payload, req.PestType, req.FrequencyHz, req.DurationSeconds)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

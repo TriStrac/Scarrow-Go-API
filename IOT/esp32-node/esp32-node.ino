@@ -148,22 +148,28 @@ void processRadar2() {
 
 void setup() {
   Serial.begin(115200);
-  
+  Serial.println("[DEBUG] 1: Serial done");
+  delay(10);
+
   preferences.begin("scarrow", true);
   nodeId = preferences.getString("node_id", "");
   nodeSecret = preferences.getString("node_secret", "");
   hubFilter = preferences.getString("hub_filter", "");
   preferences.end();
+  Serial.println("[DEBUG] 2: Preferences done");
 
   if (nodeId == "" || nodeSecret == "") { enterSetupMode(); return; }
 
-  Serial.println("Node ID: " + nodeId);
+  Serial.println("[DEBUG] 3: past setup mode check");
   pinMode(RADAR1_OT1, INPUT);
   pinMode(RADAR2_OT1, INPUT);
+  Serial.println("[DEBUG] 4: pinMode done");
 
   UART1.begin(115200, SERIAL_8N1, 17, 16);
+  Serial.println("[DEBUG] 5: UART1 begin done");
   delay(200);
   UART2.begin(115200, SERIAL_8N1, RADAR2_RX, RADAR2_TX);
+  Serial.println("[DEBUG] 6: UART2 begin done");
   delay(200);
   
   delay(2000);

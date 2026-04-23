@@ -125,19 +125,23 @@ bool sendCmd2(const char* label, uint8_t* cmd, int len) {
   else { Serial.println(" TIMEOUT"); return false; }
 }
 
+void parseDistance(String& data, int* lastDistanceCm, const char* label) {
+  if (data.startsWith("Range")) {
+    int idx = data.indexOf(' ');
+    if (idx > 0) {
+      *lastDistanceCm = data.substring(idx + 1).toInt();
+      Serial.print(label); Serial.print(*lastDistanceCm); Serial.println(" cm");
+    }
+  }
+}
+
 void processRadar2() {
   if (UART2.available()) {
     String data = UART2.readStringUntil('\n');
     data.trim();
     if (data.length() > 0) {
       Serial.print("[R2] "); Serial.println(data);
-      if (data.startsWith("Range")) {
-        int idx = data.indexOf(' ');
-        if (idx > 0) {
-          lastDistance2Cm = data.substring(idx + 1).toInt();
-          Serial.print("Distance2: "); Serial.print(lastDistance2Cm); Serial.println(" cm");
-        }
-      }
+      parseDistance(data, &lastDistance2Cm, "Distance2: ");
     }
   }
 }
@@ -220,13 +224,7 @@ void loop() {
     data.trim();
     if (data.length() > 0) {
       Serial.print("[R1] "); Serial.println(data);
-      if (data.startsWith("Range")) {
-        int idx = data.indexOf(' ');
-        if (idx > 0) {
-          lastDistanceCm = data.substring(idx + 1).toInt();
-          Serial.print("Distance: "); Serial.print(lastDistanceCm); Serial.println(" cm");
-        }
-      }
+      parseDistance(data, &lastDistanceCm, "Distance: ");
     }
   }
   

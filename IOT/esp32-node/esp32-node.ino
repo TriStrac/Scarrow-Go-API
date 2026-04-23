@@ -4,35 +4,23 @@
 #include <BLE2902.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
-// --- HardwareSerial ---
+
 HardwareSerial UART1(1);
 HardwareSerial UART2(2);
 
-// --- Pin Definitions ---
-// Radar 1 (Bird detection - top)
 #define RADAR1_OT1 16
 #define RADAR1_TX 17
-
-// Radar 2 (Rat detection - bottom)
 #define RADAR2_OT1 13
 #define RADAR2_RX 12
 #define RADAR2_TX 10
 
-// Deterrence (not yet connected)
-// #define MOSFET_PIN 4
-// #define AUDIO_PIN 5
-// #define PEST_FREQ 20000
-
-// --- BLE UUIDs ---
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
-// --- LD2420 Config ---
 uint8_t openCfg[]  = {0xFD, 0xFC, 0xFB, 0xFA, 0x04, 0x00, 0xFF, 0x00, 0x01, 0x00, 0x04, 0x03, 0x02, 0x01};
 uint8_t setRunMode[] = {0xFD, 0xFC, 0xFB, 0xFA, 0x08, 0x00, 0x12, 0x00, 0x00, 0x00, 0x64, 0x00, 0x00, 0x00, 0x04, 0x03, 0x02, 0x01};
 uint8_t closeCfg[] = {0xFD, 0xFC, 0xFB, 0xFA, 0x02, 0x00, 0xFE, 0x00, 0x04, 0x03, 0x02, 0x01};
 
-// --- Global ---
 Preferences preferences;
 String nodeId = "";
 String nodeSecret = "";
@@ -42,7 +30,6 @@ int lastDistanceCm = -1;
 int lastDistance2Cm = -1;
 bool isSetupMode = false;
 
-// --- BLE Callbacks ---
 class MyCallbacks: public BLECharacteristicCallbacks {
     void onWrite(BLECharacteristic *pCharacteristic) {
       String value = pCharacteristic->getValue();
@@ -149,7 +136,6 @@ void processRadar2() {
 void setup() {
   Serial.begin(115200);
   Serial.println("[DEBUG] 1: Serial done");
-  delay(10);
 
   preferences.begin("scarrow", true);
   nodeId = preferences.getString("node_id", "");
@@ -165,41 +151,43 @@ void setup() {
   pinMode(RADAR2_OT1, INPUT);
   Serial.println("[DEBUG] 4: pinMode done");
 
+  noInterrupts();
   UART1.begin(115200, SERIAL_8N1, 17, 16);
+  interrupts();
   Serial.println("[DEBUG] 5: UART1 begin done");
-  delay(200);
+
+  noInterrupts();
   UART2.begin(115200, SERIAL_8N1, RADAR2_RX, RADAR2_TX);
+  interrupts();
   Serial.println("[DEBUG] 6: UART2 begin done");
-  delay(200);
-  
+
   delay(2000);
   Serial.println("\n🚀 Scarrow Node - FIELD MODE");
-  
+
   sendCmd("Open", openCfg, sizeof(openCfg));
   delay(100);
   sendCmd("Mode", setRunMode, sizeof(setRunMode));
   delay(100);
   sendCmd("Close", closeCfg, sizeof(closeCfg));
-  
+
   sendCmd2("Open", openCfg, sizeof(openCfg));
   delay(100);
   sendCmd2("Mode", setRunMode, sizeof(setRunMode));
   delay(100);
   sendCmd2("Close", closeCfg, sizeof(closeCfg));
   Serial.println("Radar 2 config sent");
-  
+
   Serial.println("\n--- Radars Active ---");
 }
 
 void loop() {
   if (isSetupMode) { delay(1000); return; }
 
-  // Read OT1 for motion detection
   int r1 = digitalRead(RADAR1_OT1);
   int r2 = digitalRead(RADAR2_OT1);
-  
+
   static int lastR1 = -1, lastR2 = -1;
-  
+
   if (r1 != lastR1) {
     Serial.print("[R1 OT1] "); Serial.println(r1 ? "HIGH" : "LOW");
     lastR1 = r1;
@@ -208,8 +196,7 @@ void loop() {
     Serial.print("[R2 OT1] "); Serial.println(r2 ? "HIGH" : "LOW");
     lastR2 = r2;
   }
-  
-  // Motion detection state (deterrence not yet connected)
+
   if (r1 == HIGH || r2 == HIGH) {
     if (!isMotionDetected) {
       Serial.println("MOTION DETECTED");
@@ -221,8 +208,7 @@ void loop() {
       isMotionDetected = false;
     }
   }
-  
-  // Read serial distance from Radar 1
+
   if (UART1.available()) {
     String data = UART1.readStringUntil('\n');
     data.trim();
@@ -231,7 +217,6 @@ void loop() {
       parseDistance(data, &lastDistanceCm, "Distance: ");
     }
   }
-  
-  // Process Radar 2 serial data
+
   processRadar2();
 }

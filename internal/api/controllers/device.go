@@ -41,6 +41,7 @@ type UpdateDeviceReq struct {
 }
 
 type CreateDeviceLogReq struct {
+	NodeID           string  `json:"node_id"`
 	LogType         string  `json:"log_type" binding:"required"`
 	Payload         string  `json:"payload" binding:"required"`
 	PestType        string  `json:"pest_type"`

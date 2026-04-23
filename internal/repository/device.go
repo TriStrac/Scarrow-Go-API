@@ -18,6 +18,7 @@ type DeviceRepository interface {
 	GetDevicesByUserID(userID string) ([]models.Device, error)
 	GetDevicesByUserIDs(userIDs []string) ([]models.Device, error)
 	IsOwner(deviceID string, userID string) (bool, error)
+	IsNodeOwnedByHub(nodeID string, hubID string) (bool, error)
 	UnpairNodesByParent(parentID string) error
 
 	// Logging
@@ -82,6 +83,18 @@ func (r *deviceRepository) IsOwner(deviceID string, userID string) (bool, error)
 	var count int64
 	err := r.db.Model(&models.Device{}).Where("device_id = ? AND user_id = ?", deviceID, userID).Count(&count).Error
 	return count > 0, err
+}
+
+func (r *deviceRepository) IsNodeOwnedByHub(nodeID string, hubID string) (bool, error) {
+	var device models.Device
+	err := r.db.Where("device_id = ?", nodeID).First(&device).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
+		return false, err
+	}
+	return device.ParentID != nil && *device.ParentID == hubID, nil
 }
 
 func (r *deviceRepository) UnpairNodesByParent(parentID string) error {

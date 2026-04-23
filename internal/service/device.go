@@ -161,6 +161,13 @@ func (s *deviceService) IsOwner(deviceID, userID string) (bool, error) {
 func (s *deviceService) CreateLog(deviceID, nodeID, logType, payload, pestType string, freq float64, duration int) error {
 	targetDeviceID := deviceID
 	if nodeID != "" {
+		nodeOwner, err := s.repo.IsNodeOwnedByHub(nodeID, deviceID)
+		if err != nil {
+			return err
+		}
+		if !nodeOwner {
+			return errors.New("node does not belong to this hub")
+		}
 		targetDeviceID = nodeID
 	}
 

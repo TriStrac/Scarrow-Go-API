@@ -443,7 +443,7 @@ import (
 )
 
 const dbPath = "scarrow.db"
-const apiURL = "https://api.scarrow.io"  // or env var
+const apiURL = "https://scarrow-api.striel.xyz"  // or env var
 
 func main() {
 	fmt.Println("🚀 Scarrow Hub Go Service starting...")

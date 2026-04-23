@@ -39,6 +39,7 @@ String nodeSecret = "";
 String hubFilter = "";
 bool isMotionDetected = false;
 int lastDistanceCm = -1;
+int lastDistance2Cm = -1;
 bool isSetupMode = false;
 
 // --- BLE Callbacks ---
@@ -125,10 +126,19 @@ bool sendCmd2(const char* label, uint8_t* cmd, int len) {
 }
 
 void processRadar2() {
-  while (UART2.available()) {
-    char c = UART2.read();
-    Serial.print("[R2] ");
-    Serial.println(c);
+  if (UART2.available()) {
+    String data = UART2.readStringUntil('\n');
+    data.trim();
+    if (data.length() > 0) {
+      Serial.print("[R2] "); Serial.println(data);
+      if (data.startsWith("Range")) {
+        int idx = data.indexOf(' ');
+        if (idx > 0) {
+          lastDistance2Cm = data.substring(idx + 1).toInt();
+          Serial.print("Distance2: "); Serial.print(lastDistance2Cm); Serial.println(" cm");
+        }
+      }
+    }
   }
 }
 

@@ -24,7 +24,7 @@ services:
 
   api:
     build: .
-    container_name: scarrow_api # Explicitly named so Nginx can find it
+    container_name: scarrow_api
     restart: unless-stopped
     env_file:
       - .env
@@ -35,13 +35,13 @@ services:
         condition: service_healthy
     networks:
       - scarrow_net
-      - gateway_net # Join the proxy network
+      - gateway_net
 
 networks:
   scarrow_net:
     driver: bridge
   gateway_net:
-    external: true # Defined elsewhere
+    external: true
 
 volumes:
   db_data:

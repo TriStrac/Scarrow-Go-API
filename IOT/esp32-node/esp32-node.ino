@@ -4,6 +4,7 @@
 #include <BLE2902.h>
 #include <Preferences.h>
 #include <ArduinoJson.h>
+#include <driver/uart.h>
 // --- HardwareSerial ---
 HardwareSerial UART1(1);
 HardwareSerial UART2(2);
@@ -161,12 +162,12 @@ void setup() {
   pinMode(RADAR1_OT1, INPUT);
   pinMode(RADAR2_OT1, INPUT);
 
-  noInterrupts();
   UART1.begin(115200, SERIAL_8N1, 17, 16);
   delay(100);
+  uart_set_irq_en(UART_NUM_2, UART_INTR_DISABLE);
   UART2.begin(115200, SERIAL_8N1, RADAR2_RX, RADAR2_TX);
+  uart_set_irq_en(UART_NUM_2, UART_INTR_FLAG_DEF_CONFIG);
   delay(100);
-  interrupts();
   
   delay(2000);
   Serial.println("\n🚀 Scarrow Node - FIELD MODE");

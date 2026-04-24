@@ -14,6 +14,7 @@ import (
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/middlewares"
 	"github.com/TriStrac/Scarrow-Go-API/internal/api/routes"
 	"github.com/TriStrac/Scarrow-Go-API/internal/config"
+	"github.com/TriStrac/Scarrow-Go-API/internal/mqtt"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/TriStrac/Scarrow-Go-API/pkg/utils"
@@ -23,6 +24,9 @@ import (
 func main() {
 	// Initialize Database
 	config.InitDB()
+
+	// Initialize MQTT
+	mqtt.Init("tcp://localhost:1883")
 
 	// Core Repositories
 	userRepo := repository.NewUserRepository(config.DB)

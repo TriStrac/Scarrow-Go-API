@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/TriStrac/Scarrow-Go-API/internal/mqtt"
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
@@ -278,4 +279,53 @@ func (c *DeviceController) GetMyDevices(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{"devices": devices})
+}
+
+type SendCommandReq struct {
+	Cmd           string `json:"cmd" binding:"required,oneof=reboot wifichange unpair"`
+	WifiSSID      string `json:"wifi_ssid"`
+	WifiPassword string `json:"wifi_password"`
+}
+
+func (c *DeviceController) SendCommand(ctx *gin.Context) {
+	hubID := ctx.Param("hubId")
+
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	isOwner, err := c.deviceService.IsOwner(hubID, callerID.(string))
+	if err != nil || !isOwner {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+		return
+	}
+
+	var req SendCommandReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	payload := map[string]interface{}{
+		"cmd": req.Cmd,
+	}
+	if req.Cmd == "wifichange" {
+		payload["wifi_ssid"] = req.WifiSSID
+		payload["wifi_password"] = req.WifiPassword
+	}
+
+	if mqtt.GlobalClient != nil {
+		err = mqtt.GlobalClient.PublishCommand(hubID, payload)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to publish command: " + err.Error()})
+			return
+		}
+	} else {
+		ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "MQTT not available"})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Command sent"})
 }

@@ -13,6 +13,7 @@ func RegisterDeviceRoutes(router *gin.RouterGroup, deviceController *controllers
 	hubsRoutes.Use(middlewares.AuthMiddleware(userRepo))
 	{
 		hubsRoutes.POST("/register", deviceController.RegisterHub)
+		hubsRoutes.POST("/:hubId/commands", deviceController.SendCommand)
 	}
 
 	nodesRoutes := router.Group("/nodes")

@@ -13,24 +13,12 @@ This document outlines the professional table structures for the Scarrow-Go-API,
 6. [messages](#messages)
 7. [notifications](#notifications)
 8. [otp_codes](#otp_codes)
-9. [push_tokens](#push_tokens)
-10. [subscription_plans](#subscription_plans)
-11. [user_activity_logs](#user_activity_logs)
-12. [user_addresses](#user_addresses)
-13. [user_profiles](#user_profiles)
-14. [user_subscriptions](#user_subscriptions)
-15. [users](#users)
-
----
-
-## Notes on Unused Tables
-
-The following tables exist in the schema but are **not actively used** by the API:
-
-| Table | Purpose | Status | Notes |
-|-------|---------|--------|-------|
-| `push_tokens` | FCM/APNs push notification tokens | Not used | Long polling (`GET /api/notifications/poll`) is used instead for real-time notifications |
-| `device_owners` | Device ownership mapping | Obsolete | Ownership is determined by `user_id` column on `devices` table |
+9. [subscription_plans](#subscription_plans)
+10. [user_activity_logs](#user_activity_logs)
+11. [user_addresses](#user_addresses)
+12. [user_profiles](#user_profiles)
+13. [user_subscriptions](#user_subscriptions)
+14. [users](#users)
 
 ---
 
@@ -132,16 +120,6 @@ The following tables exist in the schema but are **not actively used** by the AP
 | `expires_at` | datetime(3) | NO | NULL | |
 | `is_used` | tinyint(1) | YES | '0' | |
 | `created_at` | datetime(3) | YES | NULL | |
-
-### `push_tokens`
-| Column | Type | Nullable | Default | Extra / Key |
-| :--- | :--- | :--- | :--- | :--- |
-| `token_id` | varchar(36) | NO | NULL | PK |
-| `user_id` | varchar(36) | NO | NULL | INDEX |
-| `token` | varchar(255) | NO | NULL | UNIQUE |
-| `platform` | varchar(50) | YES | NULL | |
-| `created_at` | datetime(3) | YES | NULL | |
-| `updated_at` | datetime(3) | YES | NULL | |
 
 ### `subscription_plans`
 | Column | Type | Nullable | Default | Extra / Key |

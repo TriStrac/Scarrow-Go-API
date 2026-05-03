@@ -1,5 +1,7 @@
 # Database Schema: `scarrow_db` (Refined)
 
+**API Version:** 1.9.0
+
 This document outlines the professional table structures for the Scarrow-Go-API, featuring explicitly named primary keys and a simplified user-device ownership model.
 
 ## Table of Contents
@@ -21,6 +23,17 @@ This document outlines the professional table structures for the Scarrow-Go-API,
 
 ---
 
+## Notes on Unused Tables
+
+The following tables exist in the schema but are **not actively used** by the API:
+
+| Table | Purpose | Status | Notes |
+|-------|---------|--------|-------|
+| `push_tokens` | FCM/APNs push notification tokens | Not used | Long polling (`GET /api/notifications/poll`) is used instead for real-time notifications |
+| `device_owners` | Device ownership mapping | Obsolete | Ownership is determined by `user_id` column on `devices` table |
+
+---
+
 ### `device_logs`
 | Column | Type | Nullable | Default | Extra / Key |
 | :--- | :--- | :--- | :--- | :--- |
@@ -32,6 +45,8 @@ This document outlines the professional table structures for the Scarrow-Go-API,
 | `duration_seconds` | bigint | YES | NULL | |
 | `payload` | text | YES | NULL | |
 | `created_at` | datetime(3) | YES | NULL | |
+
+> **Note:** `device_id` stores the ID of the device that detected the pest — if a node detected it, `device_id` = node's ID; if hub detected it, `device_id` = hub's ID.
 
 ### `devices`
 | Column | Type | Nullable | Default | Extra / Key |

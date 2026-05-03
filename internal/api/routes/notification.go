@@ -12,6 +12,7 @@ func RegisterNotificationRoutes(router *gin.RouterGroup, notificationController 
 	notificationRoutes.Use(middlewares.AuthMiddleware(userRepo))
 	{
 		notificationRoutes.GET("/my", notificationController.GetMyNotifications)
+		notificationRoutes.GET("/poll", notificationController.PollNotifications)
 		notificationRoutes.PATCH("/:notificationId/read", notificationController.MarkAsRead)
 		notificationRoutes.PATCH("/read-all", notificationController.MarkAllAsRead)
 	}

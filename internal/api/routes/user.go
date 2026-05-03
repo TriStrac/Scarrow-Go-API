@@ -28,13 +28,10 @@ func SetupUserRoutes(router *gin.RouterGroup, userController *controllers.UserCo
 			protected.GET("/me", userController.GetMe)
 			protected.GET("/:userId", userController.GetUserByID)
 			protected.PATCH("/:userId", userController.UpdateUser)
+			protected.PATCH("/:userId/address", userController.PatchUserAddress)
 			protected.POST("/changePassword", userController.ChangePassword)
 			protected.PATCH("/:userId/softDelete", userController.SoftDeleteUser)
 			protected.DELETE("/:userId/hard", userController.HardDeleteUser)
-			
-			// Push Tokens
-			protected.POST("/me/push-tokens", userController.SavePushToken)
-			protected.DELETE("/me/push-tokens/:tokenId", userController.RemovePushToken)
 		}
 	}
 }

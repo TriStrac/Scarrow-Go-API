@@ -4,9 +4,9 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/TriStrac/Scarrow-Go-API/internal/mqtt"
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
+	"github.com/TriStrac/Scarrow-Go-API/internal/ws"
 	"github.com/gin-gonic/gin"
 )
 
@@ -282,9 +282,9 @@ func (c *DeviceController) GetMyDevices(ctx *gin.Context) {
 }
 
 type SendCommandReq struct {
-	Cmd           string `json:"cmd" binding:"required,oneof=reboot wifichange unpair"`
-	WifiSSID      string `json:"wifi_ssid"`
-	WifiPassword string `json:"wifi_password"`
+	Cmd       string `json:"cmd" binding:"required,oneof=reboot wifi reset"`
+	SSID      string `json:"ssid"`
+	Password  string `json:"password"`
 }
 
 func (c *DeviceController) SendCommand(ctx *gin.Context) {
@@ -296,10 +296,14 @@ func (c *DeviceController) SendCommand(ctx *gin.Context) {
 		return
 	}
 
-	isOwner, err := c.deviceService.IsOwner(hubID, callerID.(string))
-	if err != nil || !isOwner {
-		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
-		return
+	// Skip ownership check for dev bypass
+	isDevBypass := callerID.(string) == "dev-bypass-user"
+	if !isDevBypass {
+		isOwner, err := c.deviceService.IsOwner(hubID, callerID.(string))
+		if err != nil || !isOwner {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+			return
+		}
 	}
 
 	var req SendCommandReq
@@ -308,24 +312,30 @@ func (c *DeviceController) SendCommand(ctx *gin.Context) {
 		return
 	}
 
-	payload := map[string]interface{}{
-		"cmd": req.Cmd,
-	}
-	if req.Cmd == "wifichange" {
-		payload["wifi_ssid"] = req.WifiSSID
-		payload["wifi_password"] = req.WifiPassword
-	}
-
-	if mqtt.GlobalClient != nil {
-		err = mqtt.GlobalClient.PublishCommand(hubID, payload)
-		if err != nil {
-			ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to publish command: " + err.Error()})
-			return
-		}
-	} else {
-		ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "MQTT not available"})
+	if ws.Client == nil || ws.Client.Conn == nil {
+		ctx.JSON(http.StatusServiceUnavailable, gin.H{"error": "WebSocket not connected"})
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"message": "Command sent"})
+	args := map[string]interface{}{}
+	if req.Cmd == "wifi" {
+		if req.SSID == "" || req.Password == "" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "wifi requires ssid and password"})
+			return
+		}
+		args["ssid"] = req.SSID
+		args["password"] = req.Password
+	}
+
+	if err := ws.Client.SendCommand(hubID, req.Cmd, args); err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send command: " + err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Command sent",
+		"cmd":     req.Cmd,
+		"hub_id":  hubID,
+		"async":   true,
+	})
 }

@@ -14,6 +14,14 @@ import (
 // AuthMiddleware validates the JWT token in the Authorization header and checks user verification
 func AuthMiddleware(userRepo repository.UserRepository) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Check dev bypass first
+		bypassSecret := os.Getenv("DEV_BYPASS_SECRET")
+		if bypassSecret != "" && c.GetHeader("X-Dev-Bypass") == bypassSecret {
+			c.Set("userID", "dev-bypass-user")
+			c.Next()
+			return
+		}
+
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})

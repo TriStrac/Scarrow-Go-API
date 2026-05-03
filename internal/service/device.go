@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
@@ -23,8 +24,11 @@ type DeviceService interface {
 	IsOwner(deviceID, userID string) (bool, error)
 
 	// Logging
-CreateLog(deviceID, nodeID, logType, payload, pestType string, freq float64, duration int) error
+	CreateLog(deviceID, nodeID, logType, payload, pestType string, freq float64, duration int) error
 	GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error)
+
+	// DetectionLogHandler interface
+	HandleDetectionLog(logID, deviceID, nodeID, logType, pestType string, freqHz float64, duration int, payload string) error
 }
 
 type deviceService struct {
@@ -185,4 +189,29 @@ func (s *deviceService) CreateLog(deviceID, nodeID, logType, payload, pestType s
 
 func (s *deviceService) GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error) {
 	return s.repo.GetLogsByDeviceID(deviceID, limit, offset)
+}
+
+func (s *deviceService) HandleDetectionLog(logID, deviceID, nodeID, logType, pestType string, freqHz float64, duration int, payload string) error {
+	targetDeviceID := deviceID
+	if nodeID != "" {
+		nodeOwner, err := s.repo.IsNodeOwnedByHub(nodeID, deviceID)
+		if err != nil {
+			return err
+		}
+		if !nodeOwner {
+			return fmt.Errorf("node %s does not belong to hub %s", nodeID, deviceID)
+		}
+		targetDeviceID = nodeID
+	}
+
+	deviceLog := &models.DeviceLog{
+		ID:                logID,
+		DeviceID:          targetDeviceID,
+		LogType:           logType,
+		Payload:           payload,
+		PestType:          pestType,
+		FrequencyHz:       freqHz,
+		DurationSeconds:   duration,
+	}
+	return s.repo.CreateLog(deviceLog)
 }

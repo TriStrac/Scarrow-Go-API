@@ -1,7 +1,7 @@
 # Scarrow-Go-API - Frontend Integration Guide 🚀
 
 **Base URL:** `http://localhost:8080` (Local) / `https://api.scarrow.com` (Production)
-**Version:** 1.8.0
+**Version:** 1.9.0
 
 ## 🔑 Global Configuration
 
@@ -178,7 +178,30 @@ Authorization: Bearer <your_jwt_token_here>
 ### 12. Hard Delete User (Development) (🔒 Protected)
 `DELETE /api/users/:userId/hard`
 
-**Note: For development purposes. Permanently deletes the user account and perfectly wipes all associated data (messages, logs, tokens, profiles, etc.) from the database.**
+**Note: For development purposes. Permanently deletes the user account and perfectly wipes all associated data (messages, logs, tokens, profiles, etc.) from the database.*
+
+### 13. Update User Address (🔒 Protected)
+`PATCH /api/users/:userId/address`
+
+**Description:** Updates the user's address. Address is auto-created (empty) on registration. Only the user themselves can update.
+
+**Request Payload:**
+```json
+{
+  "street_name": "123 Main St",
+  "baranggay": "San Jose",
+  "town": "Makati",
+  "province": "Metro Manila",
+  "zip_code": "1205"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Address updated successfully"
+}
+```
 
 ---
 
@@ -398,6 +421,70 @@ Content-Type: application/json
 
 ---
 
+### 7. Send Command to Hub (🔒 Protected)
+`POST /api/hubs/:hubId/commands`
+
+**Description:** Sends a command to a Raspberry Pi hub via WebSocket. Commands are executed asynchronously on the Pi.
+
+**Authentication:** User must be owner of the hub.
+
+**Request Payload:**
+```json
+{
+  "cmd": "reboot"
+}
+```
+
+**Available Commands:**
+
+| Command | Args | Description |
+|---------|------|-------------|
+| `reboot` | none | Reboots the Raspberry Pi |
+| `wifi` | `ssid`, `password` | Configures Wi-Fi connection via nmcli |
+| `reset` | none | Resets hub to setup mode (clears config, restarts service) |
+
+**Command Examples:**
+
+Reboot:
+```json
+{
+  "cmd": "reboot"
+}
+```
+
+Change Wi-Fi:
+```json
+{
+  "cmd": "wifi",
+  "ssid": "MyNetwork",
+  "password": "secretpass123"
+}
+```
+
+Reset to Setup Mode:
+```json
+{
+  "cmd": "reset"
+}
+```
+
+**Success Response (200 OK):**
+```json
+{
+  "message": "Command sent",
+  "cmd": "reboot",
+  "hub_id": "HUB-XXXX-YYYY",
+  "async": true
+}
+```
+
+**Error Responses:**
+- `400`: Invalid command or missing required args (e.g., wifi without ssid/password)
+- `403`: User is not the owner of this hub
+- `503`: WebSocket not connected (Pi is offline)
+
+---
+
 ## ✉️ Messages Module (`/api/messages`)
 
 ### 1. List My Threads (🔒 Protected)
@@ -528,10 +615,53 @@ Content-Type: application/json
 ### 1. Get My Notifications (🔒 Protected)
 `GET /api/notifications/my`
 
-### 2. Mark as Read (🔒 Protected)
+**Returns paginated notification history.**
+
+### 2. Long Poll for New Notifications (🔒 Protected)
+`GET /api/notifications/poll?since=2026-05-04T00:00:00Z`
+
+**Description:** Long-polling endpoint that holds the connection until a new notification arrives or 80 seconds elapse. Mobile app uses this for real-time notification updates.
+
+**Query Parameters:**
+- `since` (optional): ISO8601 timestamp. Returns notifications newer than this time. If omitted, returns all unread.
+
+**Response (new notifications found):**
+```json
+{
+  "notifications": [
+    {
+      "id": "notification-uuid",
+      "title": "New message",
+      "message": "You have a new message from John",
+      "is_read": false,
+      "created_at": "2026-05-04T10:30:00Z"
+    }
+  ],
+  "timeout": false
+}
+```
+
+**Response (timeout — no new notifications):**
+```json
+{
+  "notifications": [],
+  "timeout": true
+}
+```
+
+**Mobile Polling Flow:**
+```
+1. Mobile calls GET /notifications/poll?since=<last_received_notification_timestamp>
+2. Server holds connection (up to 80s)
+3. On new notification: server responds immediately with notification data
+4. On timeout: server responds with empty notifications + timeout:true
+5. Mobile immediately reconnects and polls again
+```
+
+### 3. Mark Single Notification as Read (🔒 Protected)
 `PATCH /api/notifications/:notificationId/read`
 
-### 3. Mark All as Read (🔒 Protected)
+### 4. Mark All as Read (🔒 Protected)
 `PATCH /api/notifications/read-all`
 
 ---

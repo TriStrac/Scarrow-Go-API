@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
@@ -53,5 +54,41 @@ func (c *NotificationController) MarkAllAsRead(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	ctx.JSON(http.StatusOK, gin.H{"message": "All notifications marked as read"})
+}
+
+func (c *NotificationController) PollNotifications(ctx *gin.Context) {
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	since := ctx.Query("since")
+	timeout := 80 * time.Second
+	deadline := time.Now().Add(timeout)
+
+	for time.Now().Before(deadline) {
+		notifications, isTimeout, err := c.notificationService.PollNotifications(callerID.(string), since)
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if !isTimeout || len(notifications) > 0 {
+			ctx.JSON(http.StatusOK, gin.H{
+				"notifications": notifications,
+				"timeout":      isTimeout,
+			})
+			return
+		}
+
+		time.Sleep(2 * time.Second)
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"notifications": []interface{}{},
+		"timeout":       true,
+	})
 }

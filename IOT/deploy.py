@@ -23,10 +23,18 @@ try:
 
     # Upload binary
     print(f"Uploading {binary_path} to {remote_bin}...")
-    sftp = client.open_sftp()
-    sftp.put(binary_path, remote_bin)
-    sftp.close()
-    print("Upload complete.")
+    try:
+        sftp = client.open_sftp()
+        sftp.put(binary_path, remote_bin)
+        sftp.close()
+        print("Upload complete.")
+    except Exception as e:
+        print(f"SFTP Upload failed: {e}")
+        # Try to get more error info
+        transport = client.get_transport()
+        if transport:
+            print(f"Transport active: {transport.is_active()}")
+        raise
 
     # Make executable and run in tmux
     print("Setting up tmux session...")

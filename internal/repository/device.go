@@ -24,6 +24,7 @@ type DeviceRepository interface {
 	// Logging
 	CreateLog(log *models.DeviceLog) error
 	GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error)
+	GetPestDistributionByUserID(userID string, timeframe string) (map[string]int, error)
 }
 
 type deviceRepository struct {
@@ -108,7 +109,7 @@ func (r *deviceRepository) CreateLog(log *models.DeviceLog) error {
 func (r *deviceRepository) GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error) {
 	var logs []models.DeviceLog
 	query := r.db.Where("device_id = ?", deviceID).Order("created_at desc")
-	
+
 	if limit > 0 {
 		query = query.Limit(limit)
 	}
@@ -118,4 +119,28 @@ func (r *deviceRepository) GetLogsByDeviceID(deviceID string, limit int, offset 
 
 	err := query.Find(&logs).Error
 	return logs, err
+}
+
+func (r *deviceRepository) GetPestDistributionByUserID(userID string, timeframe string) (map[string]int, error) {
+	type pestCount struct {
+		PestType string
+		Count    int
+	}
+	var results []pestCount
+
+	subQuery := r.db.Model(&models.Device{}).Where("user_id = ? AND is_deleted = false", userID).Select("device_id")
+	err := r.db.Model(&models.DeviceLog{}).
+		Select("pest_type, COUNT(*) as count").
+		Where("device_id IN (?) AND pest_type != '' AND pest_type IS NOT NULL", subQuery).
+		Group("pest_type").
+		Find(&results).Error
+	if err != nil {
+		return nil, err
+	}
+
+	distribution := make(map[string]int)
+	for _, rc := range results {
+		distribution[rc.PestType] = rc.Count
+	}
+	return distribution, nil
 }

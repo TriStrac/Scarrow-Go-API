@@ -18,11 +18,10 @@ type UserRepository interface {
 	SoftDelete(id string) error
 	HardDelete(id string) error
 	UsernameExists(username string) (bool, error)
-	
-	// Push Tokens
-	SavePushToken(token *models.PushToken) error
-	RemovePushToken(tokenID string) error
-	GetPushTokensByUser(userID string) ([]models.PushToken, error)
+
+	// User Address
+	CreateUserAddress(address *models.UserAddress) error
+	UpdateUserAddress(address *models.UserAddress) error
 }
 
 type userRepository struct {
@@ -149,4 +148,12 @@ func (r *userRepository) GetPushTokensByUser(userID string) ([]models.PushToken,
 	var tokens []models.PushToken
 	err := r.db.Where("user_id = ?", userID).Find(&tokens).Error
 	return tokens, err
+}
+
+func (r *userRepository) CreateUserAddress(address *models.UserAddress) error {
+	return r.db.Create(address).Error
+}
+
+func (r *userRepository) UpdateUserAddress(address *models.UserAddress) error {
+	return r.db.Save(address).Error
 }

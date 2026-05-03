@@ -61,9 +61,49 @@ type ChangePasswordReq struct {
 	NewPassword string `json:"new_password" binding:"required,min=6"`
 }
 
-type SavePushTokenReq struct {
-	Token    string `json:"token" binding:"required"`
-	Platform string `json:"platform" binding:"required"`
+type PatchUserAddressReq struct {
+	StreetName string `json:"street_name"`
+	Baranggay  string `json:"baranggay"`
+	Town       string `json:"town"`
+	Province   string `json:"province"`
+	ZipCode    string `json:"zip_code"`
+}
+
+func (c *UserController) PatchUserAddress(ctx *gin.Context) {
+	userId := ctx.Param("userId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if callerID.(string) != userId {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "Forbidden: You can only modify your own address"})
+		return
+	}
+
+	var req PatchUserAddressReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	address := &models.UserAddress{
+		UserID:      userId,
+		StreetName:  req.StreetName,
+		Baranggay:    req.Baranggay,
+		Town:         req.Town,
+		Province:    req.Province,
+		ZipCode:      req.ZipCode,
+	}
+
+	err := c.userService.UpdateUserAddress(userId, address)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"message": "Address updated successfully"})
 }
 
 func (c *UserController) Register(ctx *gin.Context) {
@@ -481,40 +521,4 @@ func (c *UserController) CheckUsernameExists(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"exists": exists})
-}
-
-func (c *UserController) SavePushToken(ctx *gin.Context) {
-	userID, exists := ctx.Get("userID")
-	if !exists {
-		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-		return
-	}
-
-	var req SavePushTokenReq
-	if err := ctx.ShouldBindJSON(&req); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	err := c.userService.SavePushToken(userID.(string), req.Token, req.Platform)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "Push token saved successfully"})
-}
-
-func (c *UserController) RemovePushToken(ctx *gin.Context) {
-	// Not strictly checking if token belongs to caller here for simplicity,
-	// but in a production environment, you might want to verify ownership before deletion.
-	tokenID := ctx.Param("tokenId")
-	
-	err := c.userService.RemovePushToken(tokenID)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	ctx.JSON(http.StatusOK, gin.H{"message": "Push token removed successfully"})
 }

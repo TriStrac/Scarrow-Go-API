@@ -17,6 +17,7 @@ import (
 	"github.com/TriStrac/Scarrow-Go-API/internal/mqtt"
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
+	"github.com/TriStrac/Scarrow-Go-API/internal/ws"
 	"github.com/TriStrac/Scarrow-Go-API/pkg/utils"
 	"github.com/gin-gonic/gin"
 )
@@ -27,6 +28,13 @@ func main() {
 
 	// Initialize MQTT
 	mqtt.Init("tcp://localhost:1883")
+
+	// Initialize WebSocket (non-blocking - logs warning if fails)
+	if err := ws.Init(); err != nil {
+		log.Printf("WARNING: WebSocket connection failed: %v", err)
+	} else {
+		go ws.Reconnect()
+	}
 
 	// Core Repositories
 	userRepo := repository.NewUserRepository(config.DB)
@@ -57,6 +65,9 @@ func main() {
 	reportService := service.NewReportService(deviceRepo, userRepo)
 	subService := service.NewSubscriptionService(subRepo, userRepo)
 
+	// Register detection log handler for WebSocket messages from Pi devices
+	ws.RegisterDetectionLogHandler(deviceService)
+
 	// Controllers
 	userController := controllers.NewUserController(userService, otpService)
 	groupController := controllers.NewGroupController(groupService)
@@ -75,12 +86,14 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
 			"message": "Scarrow-Go-API is running",
-			"version": "1.7.2",
+			"version": "1.9.0",
 		})
 	})
 
 	// Setup API Routes
 	apiGroup := router.Group("/api")
+	// Apply Dev Bypass middleware (for testing)
+	apiGroup.Use(middlewares.DevBypassMiddleware())
 	// Apply ActivityLogMiddleware to all mutating operations in /api
 	apiGroup.Use(middlewares.ActivityLogMiddleware(activityLogService))
 

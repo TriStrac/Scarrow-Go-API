@@ -43,8 +43,7 @@ type UserService interface {
 	UsernameExists(username string) (bool, error)
 	FindByUsername(username string) (*models.User, error)
 	FindByPhoneNumber(phoneNumber string) ([]models.User, error)
-	SavePushToken(userID, token, platform string) error
-	RemovePushToken(tokenID string) error
+	UpdateUserAddress(userID string, address *models.UserAddress) error
 }
 
 type userService struct {
@@ -58,7 +57,6 @@ func NewUserService(repo repository.UserRepository, deviceRepo repository.Device
 }
 
 func (s *userService) Register(user *models.User) (*models.User, error) {
-	// Check if username exists
 	exists, err := s.repo.UsernameExists(user.Username)
 	if err != nil {
 		return nil, err
@@ -67,7 +65,6 @@ func (s *userService) Register(user *models.User) (*models.User, error) {
 		return nil, errors.New("username already exists")
 	}
 
-	// Check if phone number is already registered
 	if user.Profile != nil && user.Profile.PhoneNumber != "" {
 		existingUsers, err := s.repo.FindByPhoneNumber(user.Profile.PhoneNumber)
 		if err != nil {
@@ -78,17 +75,14 @@ func (s *userService) Register(user *models.User) (*models.User, error) {
 		}
 	}
 
-	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return nil, err
 	}
 	user.Password = string(hashedPassword)
 
-	// Generate UUIDs
 	user.ID = uuid.New().String()
 
-	// Initial profile if provided
 	if user.Profile != nil {
 		user.Profile.ID = uuid.New().String()
 		user.Profile.UserID = user.ID
@@ -98,6 +92,13 @@ func (s *userService) Register(user *models.User) (*models.User, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	emptyAddress := &models.UserAddress{
+		ID:     uuid.New().String(),
+		UserID: user.ID,
+	}
+	_ = s.repo.CreateUserAddress(emptyAddress)
+
 	return user, nil
 }
 
@@ -325,16 +326,7 @@ func (s *userService) FindByPhoneNumber(phoneNumber string) ([]models.User, erro
 	return s.repo.FindByPhoneNumber(phoneNumber)
 }
 
-func (s *userService) SavePushToken(userID, token, platform string) error {
-	pushToken := &models.PushToken{
-		ID:       uuid.New().String(),
-		UserID:   userID,
-		Token:    token,
-		Platform: platform,
-	}
-	return s.repo.SavePushToken(pushToken)
-}
-
-func (s *userService) RemovePushToken(tokenID string) error {
-	return s.repo.RemovePushToken(tokenID)
+func (s *userService) UpdateUserAddress(userID string, address *models.UserAddress) error {
+	address.UserID = userID
+	return s.repo.UpdateUserAddress(address)
 }

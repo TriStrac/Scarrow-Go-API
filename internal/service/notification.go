@@ -9,6 +9,8 @@ import (
 type NotificationService interface {
 	CreateNotification(userID, title, message string) error
 	GetNotificationsByUserID(userID string) ([]models.Notification, error)
+	GetNotificationsSince(userID string, since string) ([]models.Notification, error)
+	PollNotifications(userID string, since string) ([]models.Notification, bool, error)
 	MarkAsRead(id string) error
 	MarkAllAsRead(userID string) error
 }
@@ -33,6 +35,21 @@ func (s *notificationService) CreateNotification(userID, title, message string) 
 
 func (s *notificationService) GetNotificationsByUserID(userID string) ([]models.Notification, error) {
 	return s.repo.FindByUserID(userID)
+}
+
+func (s *notificationService) GetNotificationsSince(userID string, since string) ([]models.Notification, error) {
+	return s.repo.FindByUserIDSince(userID, since)
+}
+
+func (s *notificationService) PollNotifications(userID string, since string) ([]models.Notification, bool, error) {
+	notifications, err := s.repo.FindByUserIDSince(userID, since)
+	if err != nil {
+		return nil, false, err
+	}
+	if len(notifications) > 0 {
+		return notifications, false, nil
+	}
+	return nil, true, nil
 }
 
 func (s *notificationService) MarkAsRead(id string) error {

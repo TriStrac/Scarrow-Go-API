@@ -21,26 +21,18 @@ func NewReportService(deviceRepo repository.DeviceRepository, userRepo repositor
 }
 
 func (s *reportService) GetSummary(userID, timeframe string) (map[string]interface{}, error) {
-	// 1. Fetch user's devices
 	devices, err := s.deviceRepo.GetDevicesByUserID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// 2. (Mock Logic) Aggregate Logs across accessible devices
-	// In a real scenario, you'd execute a complex GROUP BY query in the repository.
-	// For now, we return a structured skeleton that matches what a frontend chart would expect.
+	pestData, err := s.deviceRepo.GetPestDistributionByUserID(userID, timeframe)
+	if err != nil {
+		return nil, err
+	}
 
 	totalDevices := len(devices)
 	totalAlerts := 0
-
-	// Mock aggregation
-	pestData := map[string]int{
-		"LOCUST": 14,
-		"RATS":   5,
-		"BIRDS":  22,
-	}
-	
 	for _, count := range pestData {
 		totalAlerts += count
 	}
@@ -56,7 +48,6 @@ func (s *reportService) GetSummary(userID, timeframe string) (map[string]interfa
 			{"date": "2026-04-06", "count": 2},
 			{"date": "2026-04-07", "count": 5},
 			{"date": "2026-04-08", "count": 1},
-			// ...
 		},
 	}
 

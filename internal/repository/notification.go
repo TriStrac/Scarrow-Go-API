@@ -8,6 +8,7 @@ import (
 type NotificationRepository interface {
 	Create(notification *models.Notification) error
 	FindByUserID(userID string) ([]models.Notification, error)
+	FindByUserIDSince(userID string, since string) ([]models.Notification, error)
 	MarkAsRead(id string) error
 	MarkAllAsRead(userID string) error
 }
@@ -27,6 +28,14 @@ func (r *notificationRepository) Create(notification *models.Notification) error
 func (r *notificationRepository) FindByUserID(userID string) ([]models.Notification, error) {
 	var notifications []models.Notification
 	err := r.db.Where("user_id = ? AND deleted_at IS NULL", userID).Order("created_at desc").Find(&notifications).Error
+	return notifications, err
+}
+
+func (r *notificationRepository) FindByUserIDSince(userID string, since string) ([]models.Notification, error) {
+	var notifications []models.Notification
+	err := r.db.Where("user_id = ? AND created_at > ? AND deleted_at IS NULL", userID, since).
+		Order("created_at ASC").
+		Find(&notifications).Error
 	return notifications, err
 }
 

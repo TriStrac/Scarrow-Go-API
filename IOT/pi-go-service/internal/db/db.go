@@ -1,60 +1,64 @@
 package db
 
 import (
-	"database/sql"
-
-	_ "github.com/mattn/go-sqlite3"
+	"encoding/json"
+	"os"
 )
 
 type Config struct {
-	HubID string
+	CentralDeviceID    string `json:"central_device_id"`
+	CentralDeviceSecret string `json:"central_device_secret"`
+	SkipFieldMode      bool   `json:"skip_field_mode"`
 }
 
-func InitDB(dbPath string) (*sql.DB, error) {
-	db, error := sql.Open("sqlite3", dbPath)
-	if error != nil {
-		return nil, error
-	}
+var configPath string
+var config Config
 
-	// Create table if not exists
-	query := `
-	CREATE TABLE IF NOT EXISTS config (
-		key TEXT PRIMARY KEY,
-		value TEXT
-	);`
-	_, error = db.Exec(query)
-	if error != nil {
-		return nil, error
-	}
+func LoadConfig(path string) error {
+	configPath = path
 
-	return db, nil
-}
-
-func GetHubID(db *sql.DB) (string, error) {
-	var hubID string
-	err := db.QueryRow("SELECT value FROM config WHERE key = 'hub_id'").Scan(&hubID)
-	if err == sql.ErrNoRows {
-		return "", nil
-	}
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return "", err
+		if os.IsNotExist(err) {
+			config = Config{}
+			return nil
+		}
+		return err
 	}
-	return hubID, nil
+
+	return json.Unmarshal(data, &config)
 }
 
-func GetHubSecret(db *sql.DB) (string, error) {
-	var secret string
-	err := db.QueryRow("SELECT value FROM config WHERE key = 'hub_secret'").Scan(&secret)
-	if err == sql.ErrNoRows {
-		return "", nil
+func GetHubID() string {
+	return config.CentralDeviceID
+}
+
+func GetHubSecret() string {
+	return config.CentralDeviceSecret
+}
+
+func GetSkipFieldMode() bool {
+	return config.SkipFieldMode
+}
+
+func SaveConfig(key, value string) error {
+	switch key {
+	case "central_device_id":
+		config.CentralDeviceID = value
+	case "central_device_secret":
+		config.CentralDeviceSecret = value
 	}
+
+	data, err := json.MarshalIndent(config, "", "  ")
 	if err != nil {
-		return "", err
+		return err
 	}
-	return secret, nil
+
+	return os.WriteFile(configPath, data, 0644)
 }
 
-func SaveConfig(db *sql.DB, key, value string) error {
-	_, err := db.Exec("INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)", key, value)
-	return err
+func ResetConfig() error {
+	config = Config{}
+	data, _ := json.MarshalIndent(config, "", "  ")
+	return os.WriteFile(configPath, data, 0644)
 }

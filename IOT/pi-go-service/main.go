@@ -8,63 +8,59 @@ import (
 
 	"pi-go-service/internal/ble"
 	"pi-go-service/internal/db"
+	"pi-go-service/internal/detection"
+	ws "pi-go-service/internal/ws"
 )
 
-const dbPath = "scarrow.db"
+const configPath = "scarrow.json"
 
 func main() {
 	fmt.Println("🚀 Scarrow Hub Go Service starting...")
 
-	// 1. Initialize Database
-	database, err := db.InitDB(dbPath)
-	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
-	}
-	defer database.Close()
-
-	// 2. Check for hub_id and secret
-	hubID, err := db.GetHubID(database)
-	if err != nil {
-		log.Fatalf("Failed to check hub_id: %v", err)
-	}
-	hubSecret, err := db.GetHubSecret(database)
-	if err != nil {
-		log.Fatalf("Failed to check hub_secret: %v", err)
+	if err := db.LoadConfig(configPath); err != nil {
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	if hubID == "" || hubSecret == "" {
-		fmt.Println("⚠️ Hub configuration missing. Entering SETUP MODE...")
-		
-		err = ble.RunSetupMode(func(data ble.ProvisioningData) {
-			fmt.Printf("Saving Hub ID: %s\n", data.HubID)
-			err := db.SaveConfig(database, "hub_id", data.HubID)
-			if err != nil {
-				log.Printf("Failed to save hub_id: %v", err)
+	centralDeviceID := db.GetHubID()
+	centralDeviceSecret := db.GetHubSecret()
+	skipFieldMode := db.GetSkipFieldMode()
+
+	if centralDeviceID == "" || centralDeviceSecret == "" || skipFieldMode {
+		fmt.Println("⚠️ Central Device configuration missing or SKIP enabled. Entering SETUP MODE...")
+
+		err := ble.RunSetupMode(func(data ble.ProvisioningData) {
+			fmt.Printf("Saving Central Device ID: %s\n", data.CentralDeviceID)
+			if err := db.SaveConfig("central_device_id", data.CentralDeviceID); err != nil {
+				log.Printf("Failed to save central_device_id: %v", err)
 				return
 			}
-			err = db.SaveConfig(database, "hub_secret", data.Secret)
-			if err != nil {
-				log.Printf("Failed to save hub_secret: %v", err)
+			if err := db.SaveConfig("central_device_secret", data.Secret); err != nil {
+				log.Printf("Failed to save central_device_secret: %v", err)
 				return
 			}
-			
+
 			fmt.Println("Provisioning complete! Restarting service in 3 seconds...")
 			time.Sleep(3 * time.Second)
-			os.Exit(0) // systemd will restart the service
+			os.Exit(0)
 		})
-		
+
 		if err != nil {
 			log.Fatalf("Setup Mode failed: %v", err)
 		}
 	} else {
-		fmt.Printf("✅ Hub ID: %s. Starting FIELD MODE...\n", hubID)
-		startFieldMode()
+		fmt.Printf("✅ Central Device ID: %s. Starting FIELD MODE...\n", centralDeviceID)
+		startFieldMode(centralDeviceID, centralDeviceSecret)
 	}
 }
 
-func startFieldMode() {
-	fmt.Println("Scanning for Scarrow Nodes...")
-	// TODO: Implement BLE Scanner logic for Field Mode
-	// This will involve listening for ESP32 advertisements
-	select {} // Keep running
+func startFieldMode(centralDeviceID, centralDeviceSecret string) {
+	detector := detection.NewDetector(centralDeviceID, 60)
+	ws.RegisterSimulateHandler(detector)
+
+	go ws.Reconnect(centralDeviceID)
+	go ble.RunFieldMode(centralDeviceID)
+
+	for {
+		time.Sleep(60 * time.Second)
+	}
 }

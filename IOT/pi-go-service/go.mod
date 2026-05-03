@@ -3,7 +3,7 @@ module pi-go-service
 go 1.23
 
 require (
-	github.com/mattn/go-sqlite3 v1.14.42
+	github.com/gorilla/websocket v1.5.3
 	tinygo.org/x/bluetooth v0.14.0
 )
 

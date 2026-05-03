@@ -18,11 +18,15 @@ var (
 )
 
 type ProvisioningData struct {
-	WifiSSID     string `json:"wifi_ssid"`
-	WifiPassword string `json:"wifi_password"`
-	HubID        string `json:"hub_id"`
-	Secret       string `json:"secret"`
+	WifiSSID          string `json:"wifi_ssid"`
+	WifiPassword      string `json:"wifi_password"`
+	CentralDeviceID   string `json:"central_device_id"`
+	Secret            string `json:"secret"`
 }
+
+const (
+	setupModeBLEName = "Scarrow Central Device"
+)
 
 func RunSetupMode(onSuccess func(data ProvisioningData)) error {
 	err := adapter.Enable()
@@ -32,7 +36,7 @@ func RunSetupMode(onSuccess func(data ProvisioningData)) error {
 
 	adv := adapter.DefaultAdvertisement()
 	err = adv.Configure(bluetooth.AdvertisementOptions{
-		LocalName:    "Scarrow_Hub_Setup",
+		LocalName:    setupModeBLEName,
 		ServiceUUIDs: []bluetooth.UUID{serviceUUID},
 	})
 	if err != nil {
@@ -44,7 +48,7 @@ func RunSetupMode(onSuccess func(data ProvisioningData)) error {
 		return err
 	}
 
-	fmt.Println("Advertising Scarrow_Hub_Setup...")
+	fmt.Printf("Advertising %s...\n", setupModeBLEName)
 
 	err = adapter.AddService(&bluetooth.Service{
 		UUID: serviceUUID,
@@ -61,7 +65,7 @@ func RunSetupMode(onSuccess func(data ProvisioningData)) error {
 						return
 					}
 
-					if data.WifiSSID != "" && data.HubID != "" {
+					if data.WifiSSID != "" && data.CentralDeviceID != "" {
 						fmt.Println("Provisioning data received! Updating system...")
 						err = updateWifi(data.WifiSSID, data.WifiPassword)
 						if err != nil {

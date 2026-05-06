@@ -2,6 +2,7 @@ package repository
 
 import (
 	"errors"
+	"time"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/models"
 	"gorm.io/gorm"
@@ -25,6 +26,7 @@ type DeviceRepository interface {
 	CreateLog(log *models.DeviceLog) error
 	GetLogsByDeviceID(deviceID string, limit int, offset int) ([]models.DeviceLog, error)
 	GetPestDistributionByUserID(userID string, timeframe string) (map[string]int, error)
+	GetLogsByHubID(hubID string, startDate, endDate *time.Time, limit, offset int) ([]models.DeviceLog, error)
 }
 
 type deviceRepository struct {
@@ -143,4 +145,33 @@ func (r *deviceRepository) GetPestDistributionByUserID(userID string, timeframe 
 		distribution[rc.PestType] = rc.Count
 	}
 	return distribution, nil
+}
+
+func (r *deviceRepository) GetLogsByHubID(hubID string, startDate, endDate *time.Time, limit, offset int) ([]models.DeviceLog, error) {
+	var nodeIDs []string
+	if err := r.db.Model(&models.Device{}).Where("parent_id = ?", hubID).Pluck("device_id", &nodeIDs).Error; err != nil {
+		return nil, err
+	}
+
+	allIDs := append([]string{hubID}, nodeIDs...)
+	var logs []models.DeviceLog
+	query := r.db.Where("device_id IN ?", allIDs)
+
+	if startDate != nil {
+		query = query.Where("created_at >= ?", startDate)
+	}
+	if endDate != nil {
+		query = query.Where("created_at <= ?", endDate)
+	}
+
+	query = query.Order("created_at desc")
+	if limit > 0 {
+		query = query.Limit(limit)
+	}
+	if offset > 0 {
+		query = query.Offset(offset)
+	}
+
+	err := query.Find(&logs).Error
+	return logs, err
 }

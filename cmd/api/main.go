@@ -58,7 +58,7 @@ func main() {
 	otpService := service.NewOTPService(otpRepo, smsService)
 	notificationService := service.NewNotificationService(notificationRepo)
 	userService := service.NewUserService(userRepo, deviceRepo, messageRepo)
-	groupService := service.NewGroupService(groupRepo, userRepo, deviceRepo, notificationService, invitationRepo)
+	groupService := service.NewGroupService(groupRepo, userRepo, deviceRepo, notificationService, invitationRepo, activityLogRepo)
 	deviceService := service.NewDeviceService(deviceRepo, userRepo)
 	activityLogService := service.NewActivityLogService(activityLogRepo)
 	messageService := service.NewMessageService(messageRepo, userRepo, groupRepo)
@@ -86,7 +86,7 @@ func main() {
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "ok",
 			"message": "Scarrow-Go-API is running",
-			"version": "1.9.0",
+			"version": "1.10.1",
 		})
 	})
 

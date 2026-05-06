@@ -12,5 +12,6 @@ func RegisterReportRoutes(router *gin.RouterGroup, reportController *controllers
 	reportRoutes.Use(middlewares.AuthMiddleware(userRepo))
 	{
 		reportRoutes.GET("/summary", reportController.GetSummary)
+		reportRoutes.GET("/hub/:hubId", reportController.GetHubReport)
 	}
 }

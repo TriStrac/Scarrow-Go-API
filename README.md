@@ -1,7 +1,7 @@
 # Scarrow-Go-API - Frontend Integration Guide 🚀
 
 **Base URL:** `http://localhost:8080` (Local) / `https://api.scarrow.com` (Production)
-**Version:** 1.9.0
+**Version:** 1.10.1
 
 ## 🔑 Global Configuration
 
@@ -250,7 +250,37 @@ Authorization: Bearer <your_jwt_token_here>
 ]
 ```
 
-### 4. Create Invitation Code (🔒 Protected)
+### 4. Get Member Devices (🔒 Protected, Head only)
+`GET /api/groups/:groupId/members/:userId/devices`
+
+**Description:** Head farmer views a group member's devices. Only the group head can call this.
+
+**Success Response (200 OK):**
+```json
+{
+  "devices": [
+    { "id": "...", "name": "North Field Hub", "type": "CENTRAL", "status": "ONLINE", "created_at": "..." }
+  ]
+}
+```
+
+### 5. Get Member Activity Logs (🔒 Protected, Head only)
+`GET /api/groups/:groupId/members/:userId/activity-logs?limit=50&offset=0`
+
+**Description:** Head farmer views a group member's activity logs. Only the group head can call this. Query params `limit` (default 50) and `offset` (default 0) are optional.
+
+**Success Response (200 OK):**
+```json
+{
+  "logs": [
+    { "id": 1, "action": "Logged in", "module": "AUTH", "created_at": "2026-05-07T10:00:00Z" }
+  ],
+  "limit": 50,
+  "offset": 0
+}
+```
+
+### 6. Create Invitation Code (🔒 Protected)
 `POST /api/groups/:groupId/invite`
 
 **Success Response (201 Created):**
@@ -264,7 +294,7 @@ Authorization: Bearer <your_jwt_token_here>
 }
 ```
 
-### 5. Join Group via Code (🔒 Protected)
+### 7. Join Group via Code (🔒 Protected)
 `POST /api/groups/join`
 
 **Request Payload:**
@@ -272,7 +302,7 @@ Authorization: Bearer <your_jwt_token_here>
 { "code": "FARM1234" }
 ```
 
-### 6. Remove Member (Admin only) (🔒 Protected)
+### 8. Remove Member (Admin only) (🔒 Protected)
 `DELETE /api/groups/member`
 
 **Request Payload:**
@@ -280,7 +310,7 @@ Authorization: Bearer <your_jwt_token_here>
 { "group_id": "...", "user_id": "..." }
 ```
 
-### 7. Leave Group (Members only) (🔒 Protected)
+### 9. Leave Group (Members only) (🔒 Protected)
 `POST /api/groups/leave`
 
 **Request Payload:**
@@ -288,7 +318,7 @@ Authorization: Bearer <your_jwt_token_here>
 { "group_id": "..." }
 ```
 
-### 8. Disband Group (Owner only) (🔒 Protected)
+### 10. Disband Group (Owner only) (🔒 Protected)
 `DELETE /api/groups/:groupId`
 
 **Description:** Disbands the entire group. This resets all former members to `SOLO` status, unpairs any devices owned by the group, deletes pending invitations, and fires a "Group Disbanded" notification to all previous members.
@@ -442,6 +472,7 @@ Content-Type: application/json
 | `reboot` | none | Reboots the Raspberry Pi |
 | `wifi` | `ssid`, `password` | Configures Wi-Fi connection via nmcli |
 | `reset` | none | Resets hub to setup mode (clears config, restarts service) |
+| `node_reset` | `node_id` | Sends reset command to an ESP32 node via BLE |
 
 **Command Examples:**
 
@@ -465,6 +496,14 @@ Reset to Setup Mode:
 ```json
 {
   "cmd": "reset"
+}
+```
+
+Reset Node:
+```json
+{
+  "cmd": "node_reset",
+  "node_id": "NODE-A1B2-C3D4"
 }
 ```
 
@@ -543,6 +582,35 @@ Reset to Setup Mode:
     { "count": 5, "date": "2026-04-07" }
   ],
   "timeframe": "last_7_days"
+}
+```
+
+---
+
+### 2. Get Hub Report (🔒 Protected)
+`GET /api/reports/hub/:hubId?start_date=2026-01-01&end_date=2026-12-31`
+
+**Description:** Returns detection report for a specific hub and its nodes. Query params `start_date` and `end_date` are optional (defaults to all time).
+
+**Response (200 OK):**
+```json
+{
+  "total": 22,
+  "detections": [
+    {
+      "pest_type": "BIRD",
+      "count": 15,
+      "logs": [
+        { "created_at": "2026-04-06T10:00:00Z", "duration_seconds": 30 },
+        { "created_at": "2026-04-07T14:00:00Z", "duration_seconds": 45 }
+      ]
+    },
+    {
+      "pest_type": "LOCUST",
+      "count": 7,
+      "logs": []
+    }
+  ]
 }
 ```
 

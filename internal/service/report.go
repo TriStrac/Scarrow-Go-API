@@ -1,11 +1,14 @@
 package service
 
 import (
+	"time"
+
 	"github.com/TriStrac/Scarrow-Go-API/internal/repository"
 )
 
 type ReportService interface {
 	GetSummary(userID, timeframe string) (map[string]interface{}, error)
+	GetHubReport(hubID string, startDate, endDate *time.Time) (map[string]interface{}, error)
 }
 
 type reportService struct {
@@ -52,4 +55,49 @@ func (s *reportService) GetSummary(userID, timeframe string) (map[string]interfa
 	}
 
 	return summary, nil
+}
+
+func (s *reportService) GetHubReport(hubID string, startDate, endDate *time.Time) (map[string]interface{}, error) {
+	logs, err := s.deviceRepo.GetLogsByHubID(hubID, startDate, endDate, 0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	type pestGroup struct {
+		PestType    string
+		Count       int
+		Logs        []map[string]interface{}
+	}
+	grouped := make(map[string]*pestGroup)
+
+	for _, log := range logs {
+		key := log.PestType
+		if key == "" {
+			key = "UNKNOWN"
+		}
+		if _, ok := grouped[key]; !ok {
+			grouped[key] = &pestGroup{PestType: key, Logs: []map[string]interface{}{}}
+		}
+		grouped[key].Count++
+		grouped[key].Logs = append(grouped[key].Logs, map[string]interface{}{
+			"created_at":        log.CreatedAt,
+			"duration_seconds":  log.DurationSeconds,
+		})
+	}
+
+	total := 0
+	detections := make([]map[string]interface{}, 0, len(grouped))
+	for _, g := range grouped {
+		total += g.Count
+		detections = append(detections, map[string]interface{}{
+			"pest_type": g.PestType,
+			"count":     g.Count,
+			"logs":      g.Logs,
+		})
+	}
+
+	return map[string]interface{}{
+		"total":      total,
+		"detections": detections,
+	}, nil
 }

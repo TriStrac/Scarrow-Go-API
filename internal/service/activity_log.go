@@ -8,6 +8,7 @@ import (
 type ActivityLogService interface {
 	LogActivity(userID string, action string, module string) error
 	GetLogsByUserID(userID string) ([]models.UserActivityLog, error)
+	GetLogsByUserIDPaginated(userID string, limit, offset int) ([]models.UserActivityLog, error)
 	GetAllLogs() ([]models.UserActivityLog, error)
 }
 
@@ -34,4 +35,8 @@ func (s *activityLogService) GetLogsByUserID(userID string) ([]models.UserActivi
 
 func (s *activityLogService) GetAllLogs() ([]models.UserActivityLog, error) {
 	return s.repo.GetAllLogs()
+}
+
+func (s *activityLogService) GetLogsByUserIDPaginated(userID string, limit, offset int) ([]models.UserActivityLog, error) {
+	return s.repo.GetLogsByUserIDPaginated(userID, limit, offset)
 }

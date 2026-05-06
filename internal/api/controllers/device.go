@@ -282,9 +282,10 @@ func (c *DeviceController) GetMyDevices(ctx *gin.Context) {
 }
 
 type SendCommandReq struct {
-	Cmd       string `json:"cmd" binding:"required,oneof=reboot wifi reset"`
+	Cmd       string `json:"cmd" binding:"required,oneof=reboot wifi reset node_reset"`
 	SSID      string `json:"ssid"`
 	Password  string `json:"password"`
+	NodeID    string `json:"node_id"`
 }
 
 func (c *DeviceController) SendCommand(ctx *gin.Context) {
@@ -325,6 +326,14 @@ func (c *DeviceController) SendCommand(ctx *gin.Context) {
 		}
 		args["ssid"] = req.SSID
 		args["password"] = req.Password
+	}
+
+	if req.Cmd == "node_reset" {
+		if req.NodeID == "" {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": "node_reset requires node_id"})
+			return
+		}
+		args["node_id"] = req.NodeID
 	}
 
 	if err := ws.Client.SendCommand(hubID, req.Cmd, args); err != nil {

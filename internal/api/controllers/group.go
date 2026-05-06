@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/TriStrac/Scarrow-Go-API/internal/service"
 	"github.com/gin-gonic/gin"
@@ -345,4 +346,62 @@ func (c *GroupController) JoinGroupByCode(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Joined group successfully"})
+}
+
+func (c *GroupController) GetMemberDevices(ctx *gin.Context) {
+	groupID := ctx.Param("groupId")
+	memberID := ctx.Param("userId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	devices, err := c.groupService.GetMemberDevices(groupID, callerID.(string), memberID)
+	if err != nil {
+		if err.Error() == "forbidden: only group head can view member devices" {
+			ctx.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"devices": devices})
+}
+
+func (c *GroupController) GetMemberActivityLogs(ctx *gin.Context) {
+	groupID := ctx.Param("groupId")
+	memberID := ctx.Param("userId")
+	callerID, exists := ctx.Get("userID")
+	if !exists {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if callerID.(string) == memberID {
+		ctx.JSON(http.StatusForbidden, gin.H{"error": "cannot view your own activity logs via this endpoint"})
+		return
+	}
+
+	limit := 50
+	offset := 0
+	if limitStr := ctx.Query("limit"); limitStr != "" {
+		if parsed, err := strconv.Atoi(limitStr); err == nil && parsed > 0 {
+			limit = parsed
+		}
+	}
+	if offsetStr := ctx.Query("offset"); offsetStr != "" {
+		if parsed, err := strconv.Atoi(offsetStr); err == nil && parsed >= 0 {
+			offset = parsed
+		}
+	}
+
+	logs, err := c.groupService.GetMemberActivityLogs(groupID, callerID.(string), memberID, limit, offset)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{"logs": logs, "limit": limit, "offset": offset})
 }

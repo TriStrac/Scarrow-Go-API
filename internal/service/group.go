@@ -21,6 +21,8 @@ type GroupService interface {
 	AddMemberByUsername(groupID, username string) error
 	RemoveMember(groupID, userID string) error
 	GetGroupMembers(groupID string) ([]MemberResponse, error)
+	GetMemberDevices(groupID, callerID, memberID string) ([]models.Device, error)
+	GetMemberActivityLogs(groupID, callerID, memberID string, limit, offset int) ([]models.UserActivityLog, error)
 
 	// Invitations
 	CreateInvitation(groupID, creatorID string) (*models.GroupInvitation, error)
@@ -44,11 +46,12 @@ type GroupDetailResponse struct {
 }
 
 type groupService struct {
-	groupRepo      repository.GroupRepository
-	userRepo       repository.UserRepository
-	deviceRepo     repository.DeviceRepository
-	notification   NotificationService
-	invitationRepo repository.GroupInvitationRepository
+	groupRepo        repository.GroupRepository
+	userRepo         repository.UserRepository
+	deviceRepo       repository.DeviceRepository
+	notification     NotificationService
+	invitationRepo   repository.GroupInvitationRepository
+	activityLogRepo  repository.ActivityLogRepository
 }
 
 // NewGroupService requires dependencies for cascading logic and notifications
@@ -58,13 +61,15 @@ func NewGroupService(
 	deviceRepo repository.DeviceRepository,
 	notification NotificationService,
 	invitationRepo repository.GroupInvitationRepository,
+	activityLogRepo repository.ActivityLogRepository,
 ) GroupService {
 	return &groupService{
-		groupRepo:      groupRepo,
-		userRepo:       userRepo,
-		deviceRepo:     deviceRepo,
-		notification:   notification,
-		invitationRepo: invitationRepo,
+		groupRepo:        groupRepo,
+		userRepo:         userRepo,
+		deviceRepo:       deviceRepo,
+		notification:     notification,
+		invitationRepo:   invitationRepo,
+		activityLogRepo:  activityLogRepo,
 	}
 }
 
@@ -280,8 +285,53 @@ func (s *groupService) GetGroupMembers(groupID string) ([]MemberResponse, error)
 	return responses, nil
 }
 
+func (s *groupService) GetMemberDevices(groupID, callerID, memberID string) ([]models.Device, error) {
+	group, err := s.groupRepo.FindByID(groupID)
+	if err != nil || group == nil {
+		return nil, errors.New("group not found")
+	}
+	if group.OwnerID != callerID {
+		return nil, errors.New("forbidden: only group head can view member devices")
+	}
+
+	member, err := s.userRepo.FindByID(memberID)
+	if err != nil {
+		return nil, err
+	}
+	if member == nil {
+		return nil, errors.New("member not found")
+	}
+	if member.GroupID == nil || *member.GroupID != groupID {
+		return nil, errors.New("member does not belong to this group")
+	}
+
+	return s.deviceRepo.GetDevicesByUserID(memberID)
+}
+
+func (s *groupService) GetMemberActivityLogs(groupID, callerID, memberID string, limit, offset int) ([]models.UserActivityLog, error) {
+	group, err := s.groupRepo.FindByID(groupID)
+	if err != nil || group == nil {
+		return nil, errors.New("group not found")
+	}
+	if group.OwnerID != callerID {
+		return nil, errors.New("forbidden: only group head can view member activity logs")
+	}
+
+	member, err := s.userRepo.FindByID(memberID)
+	if err != nil {
+		return nil, err
+	}
+	if member == nil {
+		return nil, errors.New("member not found")
+	}
+	if member.GroupID == nil || *member.GroupID != groupID {
+		return nil, errors.New("member does not belong to this group")
+	}
+
+	return s.activityLogRepo.GetLogsByUserIDPaginated(memberID, limit, offset)
+}
+
 func (s *groupService) CreateInvitation(groupID, creatorID string) (*models.GroupInvitation, error) {
-	// Generate 8-character code
 	code, err := s.generateRandomAlphanumeric(8)
 	if err != nil {
 		return nil, err
@@ -291,7 +341,7 @@ func (s *groupService) CreateInvitation(groupID, creatorID string) (*models.Grou
 		Code:      code,
 		GroupID:   groupID,
 		CreatedBy: creatorID,
-		ExpiresAt: time.Now().Add(48 * time.Hour), // 48 hours expiry
+		ExpiresAt: time.Now().Add(48 * time.Hour),
 	}
 
 	err = s.invitationRepo.Create(invitation)

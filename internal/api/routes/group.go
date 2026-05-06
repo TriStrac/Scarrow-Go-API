@@ -23,6 +23,8 @@ func SetupGroupRoutes(router *gin.RouterGroup, groupController *controllers.Grou
 		groupRoutes.DELETE("/member", groupController.RemoveMember)
 		groupRoutes.POST("/leave", groupController.LeaveGroup)
 		groupRoutes.GET("/:groupId/members", groupController.GetGroupMembers)
+		groupRoutes.GET("/:groupId/members/:userId/devices", groupController.GetMemberDevices)
+		groupRoutes.GET("/:groupId/members/:userId/activity-logs", groupController.GetMemberActivityLogs)
 		groupRoutes.POST("/:groupId/invite", groupController.CreateInvitation)
 		groupRoutes.POST("/join", groupController.JoinGroupByCode)
 	}
